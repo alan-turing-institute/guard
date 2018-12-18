@@ -15,6 +15,7 @@ class Polity(object):
 
     # Remove a community from the polity
     def remove_community(self,community):
+        community.assign_to_polity(None)
         self.communities.remove(community)
 
     # Determine the size of the polity (in communities)
