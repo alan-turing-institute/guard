@@ -49,9 +49,9 @@ class Community(object):
         for index,trait in enumerate(self.ultrasocietal_traits):
             if trait == False:
                 # Chance to develop an ultrasocietal trait
-                if random() < parameters.MUTATION_TO_ULTRASOCIETAL:
+                if parameters.MUTATION_TO_ULTRASOCIETAL > random():
                     self.ultrasocietal_traits[index] = True
             else:
                 # Chance to loose an ultrasocietal trait
-                if random() < parameters.MUTATION_FROM_ULTRASOCIETAL:
+                if parameters.MUTATION_FROM_ULTRASOCIETAL > random():
                     self.ultrasocietal_traits[index] = False
