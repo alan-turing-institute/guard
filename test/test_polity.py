@@ -127,6 +127,30 @@ class TestCommunitiesInPolity(object):
 
         assert defence_power == self.state.communities[index].defence_power()
 
+# Test attempting cultural shift on all communities in a polity
+class TestCulturalShift(object):
+    # Set cultural shift probabilities to unity
+    parameters.MUTATION_TO_ULTRASOCIETAL = 1
+    parameters.MUTATION_FROM_ULTRASOCIETAL = 1
+
+    def test_shift_to_true(self):
+        size = 10
+        state = polity.Polity([community.Community() for i in range(size)])
+
+        state.cultural_shift()
+
+        assert state.mean_ultrasocietal_traits() == parameters.N_ULTRASOCIETAL_TRAITS
+
+    def test_shift_to_false(self):
+        size = 10
+        state = polity.Polity([community.Community() for i in range(size)])
+        for tile in state.communities:
+            tile.ultrasocietal_traits = [True]*parameters.N_ULTRASOCIETAL_TRAITS
+
+        state.cultural_shift()
+
+        assert state.mean_ultrasocietal_traits() == 0
+
 # Assign the example ultrasocietal traits to polity
 def set_ultrasocietal_traits(polity,traits):
     for i,number in enumerate(traits):

@@ -51,3 +51,8 @@ class Polity(object):
         probability = max(probability,0)
         probability = min(probability,1)
         return probability
+
+    # Attempt cultural shift on all communities
+    def cultural_shift(self):
+        for community in self.communities:
+            community.cultural_shift()
