@@ -18,6 +18,11 @@ class Polity(object):
         community.assign_to_polity(None)
         self.communities.remove(community)
 
+    # Transfer a polity to the polity from another
+    def transfer_community(self,community):
+        community.polity.remove(community)
+        self.add_community(community)
+
     # Determine the size of the polity (in communities)
     def size(self):
         return len(self.communities)
