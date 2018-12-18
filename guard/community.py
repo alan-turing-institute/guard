@@ -41,7 +41,7 @@ class Community(object):
 
     # Determine the power of this community in defending
     def defence_power(self):
-        return self.attack_power() + \
+        return self.polity.attack_power() + \
                 parameters.ELEVATION_DEFENSE_COEFFICIENT * self.elevation
 
     # Local cultural shift (mutation of ultrasocietal traits vector)
