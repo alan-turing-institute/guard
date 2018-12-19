@@ -1,5 +1,5 @@
 from . import community, parameters
-from numpy.random import random
+from numpy.random import random, randint
 
 # Determine the probability of a successful attack
 def success_probability(attacker, defender):
@@ -41,5 +41,11 @@ def attack(attacker, defender, probability=None):
         if ethnocide_probability(attacker, defender):
             defender.ultrasocietal_traits = attacker.ultrasocietal_traits
 
+# Attempt to attack a random neighbour
+def attempt_attack(attacker):
+    direction = ['left','right','up','down'][randint(4)]
+    defender = attacker.neighbour[direction]
 
-
+    if defender is not None:
+        if defender.terrain is community.Terrain.agriculture:
+            attack(attacker, attacker.neighbour[direction])
