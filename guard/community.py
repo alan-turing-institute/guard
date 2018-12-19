@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from numpy.random import random
+from numpy.random import random, randint
 from . import parameters
 
 _DIRECTIONS = ['left','right','up','down']
@@ -57,3 +57,19 @@ class Community(object):
                 # Chance to loose an ultrasocietal trait
                 if parameters.MUTATION_FROM_ULTRASOCIETAL > random():
                     self.ultrasocietal_traits[index] = False
+
+    # Attempt to spread military technology
+    def diffuse_military_tech(self):
+        # Only agriculture tiles can spread technology
+        if self.terrain is not Terrain.agriculture:
+            return
+
+        # Select a tech to share
+        selected_tech = randint(parameters.N_MILITARY_TECHS)
+        if self.military_techs[selected_tech] == True:
+            # Choose random direction to spread tech
+            spread_direction = _DIRECTIONS[randint(4)]
+
+            # Check if neighbour has this tech
+            if self.neighbours[spread_direction].military_techs[selected_tech] == False:
+                self.neighbours[spread_direction].military_techs[selected_tech] = True

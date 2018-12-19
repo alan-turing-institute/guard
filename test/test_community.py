@@ -6,10 +6,14 @@ import pytest
 def basic_community():
     return community.Community()
 
+@pytest.fixture
+def advanced_community():
+    tile = community.Community()
+    tile.military_techs = [True]*parameters.N_MILITARY_TECHS
+    return tile
+
 # Test the community class
 class TestCommunity(object):
-    community = community.Community()
-
     def test_total_ultrasocietal_traits(self,basic_community):
         traits = 4
         tile = basic_community
@@ -41,3 +45,18 @@ class TestCulturalShift(object):
         tile.cultural_shift()
         assert tile.total_ultrasocietal_traits() == 0
 
+# Test military technology diffusion
+class TestMilitaryTechDifussion(object):
+    # Test a case of certain diffusion
+    def test_tech_diffusion(self, basic_community, advanced_community):
+        advanced = advanced_community
+        basic = basic_community
+
+        # Make basic the neighbour of advances in all directions for the
+        # purposes of this test
+        for direction in ['left','right','up','down']:
+            advanced.neighbours[direction] = basic
+
+        advanced.diffuse_military_tech()
+
+        assert basic.total_military_techs() == 1
