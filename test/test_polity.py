@@ -151,6 +151,25 @@ class TestCulturalShift(object):
 
         assert state.mean_ultrasocietal_traits() == 0
 
+# Test transfering of a community from one polity to another
+class TestTransfer(object):
+    size_a = 10
+    state_a = polity.Polity([community.Community() for i in range(size_a)])
+    size_b = 5
+    state_b = polity.Polity([community.Community() for i in range(size_b)])
+
+    # Give the ceded community some characteristic trait
+    ceded_community = state_b.communities[3]
+    ceded_community.elevation = 12
+
+    # Transfer the ceded community to state a from state b
+    state_a.transfer_community(ceded_community)
+
+    assert all([ceded_community in state_a.communities, \
+            ceded_community not in state_b.communities, \
+            state_a.size() == 11, state_b.size() == 4, \
+            state_a.communities[-1].elevation == 12])
+
 # Assign the example ultrasocietal traits to polity
 def set_ultrasocietal_traits(polity,traits):
     for i,number in enumerate(traits):

@@ -20,7 +20,7 @@ class Polity(object):
 
     # Transfer a polity to the polity from another
     def transfer_community(self,community):
-        community.polity.remove(community)
+        community.polity.remove_community(community)
         self.add_community(community)
 
     # Determine the size of the polity (in communities)
