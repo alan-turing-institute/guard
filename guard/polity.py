@@ -54,8 +54,11 @@ class Polity(object):
                 self.mean_ultrasocietal_traits()
 
         # Ensure probability is in the range [0,1]
-        probability = max(probability,0)
-        probability = min(probability,1)
+        if probability < 0:
+            probability = 0
+        elif probability > 1:
+            probability =1
+
         return probability
 
     # Attempt cultural shift on all communities
