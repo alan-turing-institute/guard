@@ -2,7 +2,7 @@ from enum import Enum, auto
 from numpy.random import random, randint
 from . import parameters
 
-_DIRECTIONS = ['left','right','up','down']
+DIRECTIONS = ('left','right','up','down')
 
 # Terrain types enum
 class Terrain(Enum):
@@ -20,7 +20,7 @@ class Community(object):
         self.ultrasocietal_traits = [False]*parameters.N_ULTRASOCIETAL_TRAITS
         self.military_techs = [False]*parameters.N_MILITARY_TECHS
 
-        self.neighbours = dict.fromkeys(_DIRECTIONS)
+        self.neighbours = dict.fromkeys(DIRECTIONS)
 
         self.polity = None
 
@@ -68,7 +68,7 @@ class Community(object):
         selected_tech = randint(parameters.N_MILITARY_TECHS)
         if self.military_techs[selected_tech] == True:
             # Choose random direction to spread tech
-            spread_direction = _DIRECTIONS[randint(4)]
+            spread_direction = DIRECTIONS[randint(4)]
 
             # Check if neighbour has this tech
             if self.neighbours[spread_direction].military_techs[selected_tech] == False:

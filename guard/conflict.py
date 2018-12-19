@@ -43,7 +43,7 @@ def attack(attacker, defender, probability=None):
 
 # Attempt to attack a random neighbour
 def attempt_attack(attacker):
-    direction = ['left','right','up','down'][randint(4)]
+    direction = community.DIRECTIONS[randint(4)]
     defender = attacker.neighbour[direction]
 
     if defender is not None:
