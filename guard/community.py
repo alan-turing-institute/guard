@@ -2,6 +2,8 @@ from enum import Enum, auto
 from numpy.random import random
 from . import parameters
 
+_DIRECTIONS = ['left','right','up','down']
+
 # Terrain types enum
 class Terrain(Enum):
     agriculture = auto()
@@ -18,7 +20,7 @@ class Community(object):
         self.ultrasocietal_traits = [False]*parameters.N_ULTRASOCIETAL_TRAITS
         self.military_techs = [False]*parameters.N_MILITARY_TECHS
 
-        self.neighbours = [None]*4
+        self.neighbours = dict.fromkeys(_DIRECTIONS)
 
         self.polity = None
 
