@@ -66,7 +66,7 @@ class World(object):
     def attack(self):
         for tile in self.tiles:
             if tile.terrain is community.Terrain.agriculture:
-                conflicit.attempt_attack(tile)
+                tile.attempt_attack()
 
     # Conduct a simulation step
     def step(self):
@@ -74,7 +74,7 @@ class World(object):
         self.diffuse_military_tech()
 
         # Cultural shift
-        self.cultrual_shift()
+        self.cultural_shift()
 
         # Disintegration
         self.disintegration()

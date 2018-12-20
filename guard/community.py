@@ -89,7 +89,7 @@ class Community(object):
     # Attempt to attack a random neighbour
     def attempt_attack(self):
         direction = DIRECTIONS[randint(4)]
-        target = self.neighbour[direction]
+        target = self.neighbours[direction]
 
         if target is not None:
             if target.terrain is Terrain.agriculture:
