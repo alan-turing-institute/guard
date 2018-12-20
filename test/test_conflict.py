@@ -1,5 +1,5 @@
 from . import context
-from guard import community, conflict, parameters, polity
+from guard import community, parameters, polity
 import pytest
 
 # Create a strong polity, large with all ultrasocietal traits
@@ -32,7 +32,7 @@ class TestSuccessProbability(object):
         attacker = weak_polity.communities[0]
         defender = strong_polity.communities[0]
 
-        probability = conflict.success_probability(attacker, defender)
+        probability = attacker.success_probability(defender)
 
         assert probability == 0
 
@@ -41,7 +41,7 @@ class TestSuccessProbability(object):
         attacker = strong_polity.communities[0]
         defender = weak_polity.communities[0]
 
-        probability = conflict.success_probability(attacker,defender)
+        probability = attacker.success_probability(defender)
 
         assert probability == 0.9900990099009901
 
@@ -55,7 +55,7 @@ class TestAttack(object):
         attacking_community = attacker.communities[4]
         defending_community = defender.communities[1]
 
-        conflict.attack(attacker=attacking_community, defender=defending_community, probability=1)
+        attacking_community.attack(target=defending_community, probability=1)
 
         assert all([attacker.size() == 21, defender.size() == 4, \
                 defending_community in attacker.communities, \
@@ -68,4 +68,4 @@ class TestEthnocide(object):
         attacking_community = strong_polity.communities[0]
         defending_community = weak_polity.communities[0]
 
-        assert conflict.ethnocide_probability(attacking_community, defending_community) == parameters.ETHNOCIDE_MIN
+        assert attacking_community.ethnocide_probability(defending_community) == parameters.ETHNOCIDE_MIN

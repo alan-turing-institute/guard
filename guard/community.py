@@ -46,6 +46,55 @@ class Community(object):
         return self.polity.attack_power() + \
                 parameters.ELEVATION_DEFENSE_COEFFICIENT * self.elevation
 
+    # Determine the probability of a successful attack
+    def success_probability(self, target):
+        power_attacker = self.attack_power()
+        power_defender = target.defence_power()
+
+        success = (power_attacker - power_defender) / (power_attacker + power_defender)
+        # Ensure probability is in the range [0,1]
+        if success < 0:
+            success = 0
+
+        return success
+
+    # Determine the probability of ethnocide
+    def ethnocide_probability(self,target):
+        probability = parameters.ETHNOCIDE_MIN
+        probability += (parameters.ETHNOCIDE_MAX - parameters.ETHNOCIDE_MIN) * \
+                self.total_military_techs() / parameters.N_MILITARY_TECHS
+        probability -= parameters.ETHNOCIDE_ELEVATION_COEFFICIENT * target.elevation
+
+        #Ensure probability is in the range [0,1]
+        if probability < 0:
+            probability = 0
+        elif probability > 1:
+            probability = 1
+
+        return probability
+
+    # Conduct an attack
+    def attack(self, target, probability=None):
+        if probability == None:
+            probability = self.success_probability(target)
+        # Determine whether attack was successful
+        if probability > random():
+            # Transfer defending community to attacker's polity
+            self.polity.transfer_community(target)
+
+            # Attempt ethnocide
+            if self.ethnocide_probability(target):
+                target.ultrasocietal_traits = self.ultrasocietal_traits
+
+    # Attempt to attack a random neighbour
+    def attempt_attack(self):
+        direction = DIRECTIONS[randint(4)]
+        target = self.neighbour[direction]
+
+        if target is not None:
+            if target.terrain is Terrain.agriculture:
+                self.attack(target)
+
     # Local cultural shift (mutation of ultrasocietal traits vector)
     def cultural_shift(self):
         for index,trait in enumerate(self.ultrasocietal_traits):
