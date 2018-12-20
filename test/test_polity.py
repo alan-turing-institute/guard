@@ -134,7 +134,7 @@ class TestCommunitiesInPolity(object):
         state.communities[index].elevation = elevation
 
         defence_power = state.attack_power() + \
-                parameters.ELEVATION_DEFENSE_COEFFICIENT * elevation
+                parameters.ELEVATION_DEFENCE_COEFFICIENT * elevation
         assert defence_power == state.communities[index].defence_power()
 
 # Test attempting cultural shift on all communities in a polity

@@ -44,7 +44,7 @@ class Community(object):
     # Determine the power of this community in defending
     def defence_power(self):
         return self.polity.attack_power() + \
-                parameters.ELEVATION_DEFENSE_COEFFICIENT * self.elevation
+                parameters.ELEVATION_DEFENCE_COEFFICIENT * self.elevation
 
     # Determine the probability of a successful attack
     def success_probability(self, target):
