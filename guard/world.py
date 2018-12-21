@@ -71,6 +71,14 @@ class World(object):
             if tile.terrain is community.Terrain.agriculture:
                 tile.attempt_attack(self.params)
 
+        self.prune_empty_polities()
+
+    # Prune polities with zero communities
+    def prune_empty_polities(self):
+        for state in self.polities:
+            if state.size() == 0:
+                self.polities.remove(state)
+
     # Conduct a simulation step
     def step(self):
         # Diffuse military technology

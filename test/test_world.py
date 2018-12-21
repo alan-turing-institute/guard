@@ -1,4 +1,5 @@
 from . import context
+from . fixtures import default_parameters
 from guard import world
 import pytest
 
@@ -36,6 +37,19 @@ class TestNeighbours(object):
                 'up':map_.index(1,2), 'down':map_.index(1,0)}
 
         assert map_.index(1,1).neighbours == neighbours_11
+
+def test_destruction_of_empty_polities(default_parameters, generate_world):
+    params = default_parameters
+    dimension = 5
+    initial_polities = dimension**2
+    map_ = generate_world(xdim=dimension,ydim=dimension)
+
+    attacker = map_.polities[0].communities[0]
+    # Initiate an attack guaranteed to succeed
+    attacker.attack(attacker.neighbours['up'], params, probability=1)
+    map_.prune_empty_polities()
+
+    assert len(map_.polities) == initial_polities - 1
 
 def test_step(generate_world):
     map_ = generate_world(xdim=5,ydim=5)
