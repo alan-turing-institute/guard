@@ -13,6 +13,18 @@ class World(object):
 
         #self.tiles = [None for i in range(self.total_tiles)]
 
+    def __str__(self):
+        string = 'World:\n'
+        string += '\t- Tiles: {0}\n'.format(self.total_tiles)
+        string += '\t- Dimensions: {0}x{1}\n'.format(self.xdim, self.ydim)
+        string += '\t- Number of polities: {0}'.format(self.number_of_polities())
+
+        return string
+
+    # Calculate the number of polities in the world
+    def number_of_polities(self):
+        return len(self.polities)
+
     # Return the tile at coordinates (x,y)
     # Returns None if there is no such tile
     def index(self, x, y):

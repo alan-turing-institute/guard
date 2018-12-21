@@ -7,6 +7,18 @@ class Polity(object):
         for community in communities:
             community.assign_to_polity(self)
 
+    def __str__(self):
+        string = "Polity:\n"
+        string += "\tNumber of communities: {0}\n".format(self.size())
+        string += "\tMean ultrasocietal traits: {0}\n".format(self.mean_ultrasocietal_traits())
+        string += "\tCommunities:\n"
+        for community in self.communities:
+            community_string = str(community).split("\n")
+            for line in community_string:
+                string +="\t\t"+line+"\n"
+
+        return string
+
     # Incorporate a community to the polity
     def add_community(self,community):
         community.assign_to_polity(self)

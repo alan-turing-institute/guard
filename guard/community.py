@@ -24,6 +24,15 @@ class Community(object):
 
         self.polity = None
 
+    def __str__(self):
+        string = "Community:\n"
+        string += "\tTerrain: {0}\n".format(self.terrain)
+        string += "\tElevation: {0}\n".format(self.elevation)
+        string += "\tTotal ultrasocietal traits: {0}\n".format(self.total_ultrasocietal_traits())
+        string += "\tTotal military technologies: {0}\n".format(self.total_military_techs())
+
+        return string
+
     # Total number of ultrasocietal traits
     def total_ultrasocietal_traits(self):
         return sum(self.ultrasocietal_traits)
