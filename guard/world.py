@@ -1,12 +1,15 @@
-from . import community, parameters, polity
+from . import community, polity
+from .parameters import defaults
 from numpy.random import random
 
 # Container for all communities(tiles) and methods relating to them
 class World(object):
-    def __init__(self, xdim, ydim):
+    def __init__(self, xdim, ydim, params=defaults):
         self.xdim = xdim
         self.ydim = ydim
         self.total_tiles = xdim*ydim
+
+        self.params = params
 
         #self.tiles = [None for i in range(self.total_tiles)]
 
@@ -29,7 +32,7 @@ class World(object):
 
     # Populate the world with agriculture communities at zero elevation
     def create_flat_agricultural_world(self):
-        self.tiles = [community.Community() for i in range(self.xdim*self.ydim)]
+        self.tiles = [community.Community(self.params) for i in range(self.xdim*self.ydim)]
         self.set_neighbours()
         # Each tile is its own polity
         self.polities = [polity.Polity([tile]) for tile in self.tiles]
@@ -38,24 +41,24 @@ class World(object):
     def diffuse_military_tech(self):
         for tile in self.tiles:
             if tile.terrain is community.Terrain.agriculture:
-                tile.diffuse_military_tech()
+                tile.diffuse_military_tech(self.params)
 
     # Attempt culturual shift in all communities
     def cultural_shift(self):
         for tile in self.tiles:
             if tile.terrain is community.Terrain.agriculture:
-                tile.cultural_shift()
+                tile.cultural_shift(self.params)
 
     # Attempt disintegration of all polities
     def disintegration(self):
         new_states = []
         for state in self.polities:
-            probability = state.disintegrate_probability()
+            probability = state.disintegrate_probability(self.params)
 
             if probability > random():
                 # Create a new set of polities, one for each of the communities
                 for tile in state.communities:
-                    new_states.append(polity.Polity([state]))
+                    new_states.append(polity.Polity([tile]))
                 # Destroy the old polity
                 self.polities.remove(state)
 
@@ -66,7 +69,7 @@ class World(object):
     def attack(self):
         for tile in self.tiles:
             if tile.terrain is community.Terrain.agriculture:
-                tile.attempt_attack()
+                tile.attempt_attack(self.params)
 
     # Conduct a simulation step
     def step(self):
