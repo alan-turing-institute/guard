@@ -1,62 +1,67 @@
 from . import context
+from .fixtures import default_parameters, custom_parameters
 from guard import community, parameters
 import pytest
 
 @pytest.fixture
 def basic_community():
-    return community.Community()
+    def _basic_community(params=parameters.defaults):
+        return community.Community(params)
+    return _basic_community
 
 @pytest.fixture
 def advanced_community():
-    tile = community.Community()
-    tile.military_techs = [True]*parameters.N_MILITARY_TECHS
+    tile = community.Community(parameters.defaults)
+    tile.military_techs = [True]*parameters.defaults.n_military_techs
     return tile
 
 # Test the community class
 class TestCommunity(object):
-    def test_total_ultrasocietal_traits(self,basic_community):
+    def test_total_ultrasocietal_traits(self, default_parameters, basic_community):
+        params = default_parameters
         traits = 4
-        tile = basic_community
-        tile.ultrasocietal_traits = [True]*traits + [False]*(parameters.N_ULTRASOCIETAL_TRAITS-traits)
+        tile = basic_community()
+        tile.ultrasocietal_traits = [True]*traits + [False]*(params.n_ultrasocietal_traits-traits)
         assert tile.total_ultrasocietal_traits() == traits
 
-    def test_total_military_techs(self,basic_community):
+    def test_total_military_techs(self, default_parameters, basic_community):
+        params = default_parameters
         techs = 7
-        tile = basic_community
-        tile.military_techs = [False]*(parameters.N_MILITARY_TECHS-techs) + [True]*techs
+        tile = basic_community()
+        tile.military_techs = [False]*(params.n_military_techs-techs) + [True]*techs
         assert tile.total_military_techs() == techs
 
 # Test cultural shift
 class TestCulturalShift(object):
-    # Set mutation to always occur
-    parameters.MUTATION_TO_ULTRASOCIETAL = 1
-    parameters.MUTATION_FROM_ULTRASOCIETAL = 1
+    def test_shift_to_true(self, custom_parameters, basic_community):
+        params = custom_parameters(mutation_to_ultrasocietal=1, \
+                mutation_from_ultrasocietal=1)
+        tile = basic_community(params)
 
-    def test_shift_to_true(self, basic_community):
-        tile = basic_community
+        tile.cultural_shift(params)
+        assert tile.total_ultrasocietal_traits() == params.n_ultrasocietal_traits
 
-        tile.cultural_shift()
-        assert tile.total_ultrasocietal_traits() == parameters.N_ULTRASOCIETAL_TRAITS
+    def test_shift_to_false(self, custom_parameters, basic_community):
+        params = custom_parameters(mutation_to_ultrasocietal=1, \
+                mutation_from_ultrasocietal=1)
+        tile = basic_community(params)
+        tile.ultrasocietal_traits = [True]*params.n_ultrasocietal_traits
 
-    def test_shift_to_false(self, basic_community):
-        tile = basic_community
-        tile.ultrasocietal_traits = [True]*parameters.N_ULTRASOCIETAL_TRAITS
-
-        tile.cultural_shift()
+        tile.cultural_shift(params)
         assert tile.total_ultrasocietal_traits() == 0
 
 # Test military technology diffusion
 class TestMilitaryTechDifussion(object):
     # Test a case of certain diffusion
-    def test_tech_diffusion(self, basic_community, advanced_community):
+    def test_tech_diffusion(self, default_parameters, basic_community, advanced_community):
+        params = default_parameters
         advanced = advanced_community
-        basic = basic_community
+        basic = basic_community()
 
         # Make basic the neighbour of advances in all directions for the
         # purposes of this test
         for direction in ['left','right','up','down']:
             advanced.neighbours[direction] = basic
 
-        advanced.diffuse_military_tech()
-
+        advanced.diffuse_military_tech(params)
         assert basic.total_military_techs() == 1

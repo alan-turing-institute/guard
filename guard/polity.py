@@ -1,9 +1,8 @@
 from . import community
-from . import parameters
 
 # Polity class
 class Polity(object):
-    def __init__(self,communities=[]):
+    def __init__(self,communities):
         self.communities = communities
         for community in communities:
             community.assign_to_polity(self)
@@ -37,20 +36,20 @@ class Polity(object):
     # communities of the polity, multiplied by the size of the polity. Here
     # the size of the polity is omitted in the mean and multiplication to
     # save calculation time.
-    def attack_power(self):
+    def attack_power(self, params):
         power = 0
         for community in self.communities:
             power += community.total_ultrasocietal_traits()
-        power *= parameters.ULTRASOCIETAL_ATTACK_COEFFICIENT
+        power *= params.ultrasocietal_attack_coefficient
         power += 1.
         return power
 
     # Determine the probability that the polity with disintegrate
-    def disintegrate_probability(self):
+    def disintegrate_probability(self, params):
         # Determine probability
-        probability = parameters.DISINTEGRATION_BASE
-        probability += parameters.DISINTEGRATION_SIZE_COEFFICIENT * self.size()
-        probability -= parameters.DISINTEGRATION_ULTRASOCIETAL_TRAIT_COEFFICIENT * \
+        probability = params.disintegration_base
+        probability += params.disintegration_size_coefficient * self.size()
+        probability -= params.disintegration_ultrasocietal_trait_coefficient * \
                 self.mean_ultrasocietal_traits()
 
         # Ensure probability is in the range [0,1]
@@ -62,6 +61,6 @@ class Polity(object):
         return probability
 
     # Attempt cultural shift on all communities
-    def cultural_shift(self):
+    def cultural_shift(self, params):
         for community in self.communities:
-            community.cultural_shift()
+            community.cultural_shift(params)
