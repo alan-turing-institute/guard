@@ -100,9 +100,18 @@ class Community(object):
         direction = DIRECTIONS[randint(4)]
         target = self.neighbours[direction]
 
-        if target is not None:
-            if target.terrain is Terrain.agriculture:
-                self.attack(target, params)
+        # Don't attack an empty neighbour
+        # It is important to replicate Turchin's results that communities attack
+        # each neighbour with a probability of 1/4
+        if target is None:
+            return
+
+        # Don't attack a neighbour in the same polity
+        if target.polity is self.polity:
+            return
+
+        if target.terrain is Terrain.agriculture:
+            self.attack(target, params)
 
     # Local cultural shift (mutation of ultrasocietal traits vector)
     def cultural_shift(self, params):
