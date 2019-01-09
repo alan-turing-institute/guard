@@ -5,7 +5,7 @@ _default_parameters = { \
         # Number of ultrasocietal traits
         'n_ultrasocietal_traits':10, \
         # Number of military technologies
-        'n_military_techs':10, \
+        'n_military_techs':5, \
         # Attack power due to ultrasoceital traits coefficient (beta in Turchin et al. 2013)
         'ultrasocietal_attack_coefficient':1, \
         # Defence due to elevation coefficient (gamma in Turchin et al. 2013)
