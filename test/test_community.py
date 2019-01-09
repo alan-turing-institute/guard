@@ -58,10 +58,5 @@ class TestMilitaryTechDifussion(object):
         advanced = advanced_community
         basic = basic_community()
 
-        # Make basic the neighbour of advances in all directions for the
-        # purposes of this test
-        for direction in ['left','right','up','down']:
-            advanced.neighbours[direction] = basic
-
-        advanced.diffuse_military_tech(params)
+        advanced.diffuse_military_tech(basic, params)
         assert basic.total_military_techs() == 1

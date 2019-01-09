@@ -1,6 +1,6 @@
 from . import community, polity
 from .parameters import defaults
-from numpy.random import random
+from numpy.random import random, permutation
 
 # Container for all communities(tiles) and methods relating to them
 class World(object):
@@ -49,12 +49,6 @@ class World(object):
         # Each tile is its own polity
         self.polities = [polity.Polity([tile]) for tile in self.tiles]
 
-    # Attempt to spread military technology in all communities
-    def diffuse_military_tech(self):
-        for tile in self.tiles:
-            if tile.terrain is community.Terrain.agriculture:
-                tile.diffuse_military_tech(self.params)
-
     # Attempt culturual shift in all communities
     def cultural_shift(self):
         for tile in self.tiles:
@@ -79,7 +73,10 @@ class World(object):
 
     # Attempt an attack from all communities
     def attack(self):
-        for tile in self.tiles:
+        # Generate a random order for communities to attempt attacks in
+        attack_order = permutation(self.total_tiles)
+        for tile_no in attack_order:
+            tile = self.tiles[tile_no]
             if tile.terrain is community.Terrain.agriculture:
                 tile.attempt_attack(self.params)
 
@@ -93,14 +90,11 @@ class World(object):
 
     # Conduct a simulation step
     def step(self):
-        # Diffuse military technology
-        self.diffuse_military_tech()
+        # Attacks
+        self.attack()
 
         # Cultural shift
         self.cultural_shift()
 
         # Disintegration
         self.disintegration()
-
-        # Attacks
-        self.attack()

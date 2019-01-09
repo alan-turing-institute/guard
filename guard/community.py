@@ -100,18 +100,29 @@ class Community(object):
         direction = DIRECTIONS[randint(4)]
         target = self.neighbours[direction]
 
-        # Don't attack an empty neighbour
+        proceed = True
+
+        # Don't attack or spread technoloy to an empty neighbour
         # It is important to replicate Turchin's results that communities attack
         # each neighbour with a probability of 1/4
         if target is None:
             return
 
-        # Don't attack a neighbour in the same polity
+        # Don't attack a neighbour in the same polity, but do spread technology
         if target.polity is self.polity:
-            return
+            proceed = False
 
-        if target.terrain is Terrain.agriculture:
+        # Don't attack a non-agricultural neighbour
+        if target.terrain is not Terrain.agriculture:
+            proceed = False
+
+        # Conduct an attack if there is no reason not to
+        if proceed:
             self.attack(target, params)
+
+        # Attempt to diffuse military technology regardless of whether the attack
+        # proceeded or was successful
+        self.diffuse_military_tech(target, params)
 
     # Local cultural shift (mutation of ultrasocietal traits vector)
     def cultural_shift(self, params):
@@ -126,17 +137,9 @@ class Community(object):
                     self.ultrasocietal_traits[index] = False
 
     # Attempt to spread military technology
-    def diffuse_military_tech(self, params):
-        # Only agriculture tiles can spread technology
-        if self.terrain is not Terrain.agriculture:
-            return
-
+    def diffuse_military_tech(self, target, params):
         # Select a tech to share
         selected_tech = randint(params.n_military_techs)
         if self.military_techs[selected_tech] == True:
-            # Choose random direction to spread tech
-            spread_direction = DIRECTIONS[randint(4)]
-
-            # Check if neighbour has this tech
-            if self.neighbours[spread_direction].military_techs[selected_tech] == False:
-                self.neighbours[spread_direction].military_techs[selected_tech] = True
+            # Share this tech with the target
+            target.military_techs[selected_tech] = True
