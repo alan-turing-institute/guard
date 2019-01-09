@@ -54,6 +54,8 @@ class TestNeighbours(object):
 
         assert map_.index(1,1).neighbours == neighbours_11
 
+# Test the assignment of littoral neighbours
+class TestLittoralNeighbours(object):
     # Ensure the littoral flag is applied correctly
     def test_littoral_assignment(self, generate_world_with_sea):
         map_ = generate_world_with_sea(xdim=3, ydim=3, \
@@ -103,6 +105,75 @@ class TestNeighbours(object):
 
         assert community.LittoralNeighbour(map_.index(1,1), 1) in map_.index(0,1).littoral_neighbours
 
+    def test_littoral_neighbour_range(self, default_parameters, generate_world):
+        params = default_parameters
+        map_ = generate_world(xdim=5,ydim=5)
+        nsteps = 10
+
+        assert map_.sea_attack_distance() == params.base_sea_attack_distance
+
+        for i in range(nsteps):
+            map_.step()
+
+        assert map_.sea_attack_distance() == params.base_sea_attack_distance + \
+                params.sea_attack_increment * (nsteps)
+
+    def test_listtoral_neighbours_in_range(self, generate_world_with_sea):
+        map_ = generate_world_with_sea(xdim=5, ydim=5, \
+                sea_tiles = [(2,1), (2,2), (2,3), (2,4), (0,4), (1,4), (3,4), (4,4)])
+
+        tile = map_.index(2,0)
+        huge_distance = 1000
+
+        # Only the tile itself should be at range 0
+        in_range = tile.littoral_neighbours_in_range(0)
+        assert len(in_range) == 1
+        assert community.LittoralNeighbour(tile,0) in in_range
+
+        # No more neighbours at range 1
+        in_range = tile.littoral_neighbours_in_range(0)
+        assert len(in_range) == 1
+
+        # Two more neighbours at sqrt(2)
+        in_range = tile.littoral_neighbours_in_range(2)
+        assert len(in_range) == 3
+        assert community.LittoralNeighbour(tile,0) in in_range
+        assert community.LittoralNeighbour(map_.index(1,1),sqrt(2)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,1),sqrt(2)) in in_range
+
+        # Two more neighbours at sqrt(5)
+        in_range = tile.littoral_neighbours_in_range(3)
+        assert len(in_range) == 5
+        assert community.LittoralNeighbour(tile,0) in in_range
+        assert community.LittoralNeighbour(map_.index(1,1),sqrt(2)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,1),sqrt(2)) in in_range
+        assert community.LittoralNeighbour(map_.index(1,2),sqrt(5)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,2),sqrt(5)) in in_range
+
+        # Two more neighbours at sqrt(10)
+        in_range = tile.littoral_neighbours_in_range(3.6)
+        assert len(in_range) == 7
+        assert community.LittoralNeighbour(tile,0) in in_range
+        assert community.LittoralNeighbour(map_.index(1,1),sqrt(2)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,1),sqrt(2)) in in_range
+        assert community.LittoralNeighbour(map_.index(1,2),sqrt(5)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,2),sqrt(5)) in in_range
+        assert community.LittoralNeighbour(map_.index(1,3),sqrt(10)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,3),sqrt(10)) in in_range
+
+        # All nine neighbours at sqrt(13)
+        in_range = tile.littoral_neighbours_in_range(huge_distance)
+        assert len(in_range) == 9
+        assert community.LittoralNeighbour(tile,0) in in_range
+        assert community.LittoralNeighbour(map_.index(1,1),sqrt(2)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,1),sqrt(2)) in in_range
+        assert community.LittoralNeighbour(map_.index(1,2),sqrt(5)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,2),sqrt(5)) in in_range
+        assert community.LittoralNeighbour(map_.index(1,3),sqrt(10)) in in_range
+        assert community.LittoralNeighbour(map_.index(3,3),sqrt(10)) in in_range
+        assert community.LittoralNeighbour(map_.index(0,3),sqrt(13)) in in_range
+        assert community.LittoralNeighbour(map_.index(4,3),sqrt(13)) in in_range
+
 
 def test_destruction_of_empty_polities(default_parameters, generate_world):
     params = default_parameters
@@ -120,4 +191,13 @@ def test_destruction_of_empty_polities(default_parameters, generate_world):
 def test_step(generate_world):
     map_ = generate_world(xdim=5,ydim=5)
     map_.step()
+
+def test_step_increment(generate_world):
+    map_ = generate_world(xdim=5,ydim=5)
+    nsteps = 10
+
+    for i in range(nsteps):
+        map_.step()
+
+    assert map_.step_number == nsteps
 

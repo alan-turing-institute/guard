@@ -12,6 +12,8 @@ class World(object):
 
         self.params = params
 
+        self.step_number = 0
+
         #self.tiles = [None for i in range(self.total_tiles)]
 
     def __str__(self):
@@ -32,6 +34,11 @@ class World(object):
         if any([x < 0, x >= self.xdim, y < 0, y >= self.ydim]):
             return None
         return self.tiles[x*self.xdim + y]
+
+    # Determine maximum sea attack distance at current step
+    def sea_attack_distance(self):
+        return self.params.base_sea_attack_distance + \
+                self.step_number * self.params.sea_attack_increment
 
     # Assign tiles their neighbours
     def set_neighbours(self):
@@ -123,7 +130,7 @@ class World(object):
         for tile_no in attack_order:
             tile = self.tiles[tile_no]
             if tile.terrain is community.Terrain.agriculture:
-                tile.attempt_attack(self.params)
+                tile.attempt_attack(self.params, self.sea_attack_distance())
 
         self.prune_empty_polities()
 
@@ -143,3 +150,6 @@ class World(object):
 
         # Disintegration
         self.disintegration()
+
+        # Increment step counter
+        self.step_number += 1

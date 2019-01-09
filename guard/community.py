@@ -1,6 +1,6 @@
 from collections import namedtuple
 from enum import Enum, auto
-from numpy.random import random, randint
+from numpy.random import random, randint, choice
 from .parameters import defaults
 
 DIRECTIONS = ('left','right','up','down')
@@ -53,6 +53,11 @@ class Community(object):
     def assign_to_polity(self, polity):
         self.polity = polity
 
+    # Filter the littoral neighbours list to only include neighbours within
+    # a given distance
+    def littoral_neighbours_in_range(self, distance):
+        return list(filter(lambda neighbour: neighbour.distance <= distance, self.littoral_neighbours))
+
     # Determine the power of an attack from this community (equal to
     # the polities attack power)
     def attack_power(self, params):
@@ -104,24 +109,28 @@ class Community(object):
                 target.ultrasocietal_traits = self.ultrasocietal_traits
 
     # Attempt to attack a random neighbour
-    def attempt_attack(self, params):
-        direction = DIRECTIONS[randint(4)]
+    def attempt_attack(self, params, sea_attack_distance):
+        direction = choice(DIRECTIONS)
         target = self.neighbours[direction]
 
         proceed = True
 
-        # Don't attack or spread technoloy to an empty neighbour
+        # Don't attack or spread technology to an empty neighbour
         # It is important to replicate Turchin's results that communities attack
         # each neighbour with a probability of 1/4
         if target is None:
             return
 
+        if target.terrain is Terrain.sea:
+            # Sea attack
+            # Find a littoral neighbour within range
+            target = choice(self.littoral_neighbours_in_range(sea_attack_distance))
+        elif target.terrain is not Terrain.agriculture:
+            # Don't attack or spread technology to a non-agricultural cell
+            return
+
         # Don't attack a neighbour in the same polity, but do spread technology
         if target.polity is self.polity:
-            proceed = False
-
-        # Don't attack a non-agricultural neighbour
-        if target.terrain is not Terrain.agriculture:
             proceed = False
 
         # Conduct an attack if there is no reason not to
