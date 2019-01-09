@@ -17,6 +17,8 @@ class Community(object):
         self.terrain = terrain
         self.elevation = elevation
 
+        self.littoral = False
+
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
         self.military_techs = [False]*params.n_military_techs
 

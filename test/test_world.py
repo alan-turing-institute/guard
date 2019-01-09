@@ -1,6 +1,6 @@
 from . import context
 from . fixtures import default_parameters
-from guard import world
+from guard import world, community
 import pytest
 
 @pytest.fixture
@@ -37,6 +37,30 @@ class TestNeighbours(object):
                 'up':map_.index(1,2), 'down':map_.index(1,0)}
 
         assert map_.index(1,1).neighbours == neighbours_11
+
+    # Ensure the littoral flag is applied correctly
+    def test_littoral_assignment(self,generate_world):
+        map_ = generate_world(xdim=3,ydim=3)
+
+        # Create three sea tiles at (0,0), (2,3) and (3,3)
+        map_.index(0,0).terrain = community.Terrain.sea
+        map_.index(1,2).terrain = community.Terrain.sea
+        map_.index(2,2).terrain = community.Terrain.sea
+
+        # Update littoral flags for all itles
+        map_.set_littoral_tiles()
+
+        # Tiles next to sea at (0,0)
+        assert map_.index(1,0).littoral == True
+        assert map_.index(0,1).littoral == True
+
+        # Tiles next to sea at (2,3) and (3,3)
+        assert map_.index(0,2).littoral == True
+        assert map_.index(1,1).littoral == True
+        assert map_.index(2,1).littoral == True
+
+        # Tiles not next to any sea
+        assert map_.index(2,0).littoral == False
 
 def test_destruction_of_empty_polities(default_parameters, generate_world):
     params = default_parameters

@@ -42,6 +42,25 @@ class World(object):
                 tile.neighbours['up'] = self.index(x,y+1)
                 tile.neighbours['down'] = self.index(x,y-1)
 
+    # Determine which tiles are littoral
+    def set_littoral_tiles(self):
+        for tile in self.tiles:
+            # Don't set littoral status for sea or desert tiles
+            if tile.terrain in [community.Terrain.sea, community.Terrain.desert]:
+                continue
+
+            for direction in community.DIRECTIONS:
+                neighbour = tile.neighbours[direction]
+                # Ensure there is a neighour
+                if neighbour == None:
+                    continue
+                # Check if neighbour is a sea tile
+                if neighbour.terrain == community.Terrain.sea:
+                    tile.littoral = True
+                    # Break here as only one neighbour needs to be sea for tile to
+                    # be littoral
+                    break
+
     # Populate the world with agriculture communities at zero elevation
     def create_flat_agricultural_world(self):
         self.tiles = [community.Community(self.params) for i in range(self.xdim*self.ydim)]
