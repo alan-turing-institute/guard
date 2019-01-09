@@ -1,5 +1,6 @@
 from . import community, polity
 from .parameters import defaults
+from numpy import sqrt
 from numpy.random import random, permutation
 
 # Container for all communities(tiles) and methods relating to them
@@ -37,6 +38,7 @@ class World(object):
         for x in range(self.xdim):
             for y in range(self.ydim):
                 tile = self.index(x,y)
+                tile.position = (x,y)
                 tile.neighbours['left'] = self.index(x-1,y)
                 tile.neighbours['right'] = self.index(x+1,y)
                 tile.neighbours['up'] = self.index(x,y+1)
@@ -61,9 +63,33 @@ class World(object):
                     # be littoral
                     break
 
+    # Determine a list of all littoral neighbours and distance for all littoral tiles
+    def set_littoral_neighbours(self):
+        littoral_tiles = list(filter(lambda tile: tile.littoral == True, self.tiles))
+        n_littoral = len(littoral_tiles)
+
+
+        for tile in littoral_tiles:
+            # Add self as a littoral neighbour with 0 distance, this is important
+            # in order to reproduce Turchin's results
+            tile.littoral_neighbours.append(community.LittoralNeighbour(tile,0))
+
+        for i in range(n_littoral-1):
+            itile = littoral_tiles[i]
+            for j in range(i+1, n_littoral):
+                jtile = littoral_tiles[j]
+
+                # Calculate euclidean distance between tiles in tile dimension units
+                distance = sqrt( (itile.position[0]-jtile.position[0])**2 + \
+                        (itile.position[1]-jtile.position[1])**2 )
+
+                # Add neighbour and the symmetric entry
+                itile.littoral_neighbours.append(community.LittoralNeighbour(jtile,distance))
+                jtile.littoral_neighbours.append(community.LittoralNeighbour(itile,distance))
+
     # Populate the world with agriculture communities at zero elevation
     def create_flat_agricultural_world(self):
-        self.tiles = [community.Community(self.params) for i in range(self.xdim*self.ydim)]
+        self.tiles = [community.Community(self.params) for i in range(self.total_tiles)]
         self.set_neighbours()
         # Each tile is its own polity
         self.polities = [polity.Polity([tile]) for tile in self.tiles]

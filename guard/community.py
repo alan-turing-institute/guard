@@ -1,3 +1,4 @@
+from collections import namedtuple
 from enum import Enum, auto
 from numpy.random import random, randint
 from .parameters import defaults
@@ -11,6 +12,9 @@ class Terrain(Enum):
     sea = auto()
     steppe = auto()
 
+# Littoral neighbour named tuple
+LittoralNeighbour = namedtuple('LittoralNeighbour', ['neighbour', 'distance'])
+
 # Community (tile) class
 class Community(object):
     def __init__(self, params, terrain=Terrain.agriculture, elevation=0):
@@ -22,7 +26,9 @@ class Community(object):
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
         self.military_techs = [False]*params.n_military_techs
 
+        self.position = (None, None)
         self.neighbours = dict.fromkeys(DIRECTIONS)
+        self.littoral_neighbours = []
 
         self.polity = None
 
