@@ -184,6 +184,25 @@ class World(object):
         # Append new polities from disintegrated old polities to list
         self.polities += new_states
 
+    # Activate agricultural communities
+    def activate(self):
+        new_states = []
+
+        # Activiate communities
+        if self.step == 900:
+            for tile in self.tiles:
+                if tile.active_from_300CE:
+                    tile.active = True
+                    new_states.append(polity.Polity([tile]))
+        elif self.step == 1100:
+            for tile in self.tiles:
+                if tile.active_from_700CE:
+                    tile.active = True
+                    new_states.append(polity.Polity([tile]))
+
+        # Append new single community polities to the polities list
+        self.polities += new_states
+
     # Attempt an attack from all communities
     def attack(self):
         # Generate a random order for communities to attempt attacks in
@@ -191,7 +210,8 @@ class World(object):
         for tile_no in attack_order:
             tile = self.tiles[tile_no]
             if tile.terrain is community.Terrain.agriculture:
-                tile.attempt_attack(self.params, self.sea_attack_distance())
+                if tile.active:
+                    tile.attempt_attack(self.params, self.sea_attack_distance())
 
         self.prune_empty_polities()
 
@@ -203,6 +223,10 @@ class World(object):
 
     # Conduct a simulation step
     def step(self):
+        # Activate agricultural communities
+        if self.step in [900, 1100]:
+            self.activate()
+
         # Attacks
         self.attack()
 

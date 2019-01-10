@@ -18,12 +18,17 @@ LittoralNeighbour = namedtuple('LittoralNeighbour', ['neighbour', 'distance'])
 # Community (tile) class
 class Community(object):
     def __init__(self, params, terrain=Terrain.agriculture, elevation=0,
-            active_from_1500BCE=False, active_from_300CE=False, active_from_700CE=False):
+            active_from_1500BCE=True, active_from_300CE=False, active_from_700CE=False):
         self.terrain = terrain
         self.elevation = elevation
         self.active_from_1500BCE = active_from_1500BCE
         self.active_from_300CE = active_from_300CE
         self.active_from_700CE = active_from_700CE
+
+        if self.active_from_1500BCE:
+            self.active = True
+        else:
+            self.active = False
 
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
         self.military_techs = [False]*params.n_military_techs
@@ -130,6 +135,11 @@ class Community(object):
             target = choice(self.littoral_neighbours_in_range(sea_attack_distance))
         elif target.terrain is not Terrain.agriculture:
             # Don't attack or spread technology to a non-agricultural cell
+            return
+
+        # Ensure target is active (agricultural at the current time), otherwise
+        # don't attack or spread technology
+        if not target.active:
             return
 
         # Don't attack a neighbour in the same polity, but do spread technology
