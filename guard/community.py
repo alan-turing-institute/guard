@@ -17,17 +17,20 @@ LittoralNeighbour = namedtuple('LittoralNeighbour', ['neighbour', 'distance'])
 
 # Community (tile) class
 class Community(object):
-    def __init__(self, params, terrain=Terrain.agriculture, elevation=0):
+    def __init__(self, params, terrain=Terrain.agriculture, elevation=0,
+            active_from_1500BCE=False, active_from_300CE=False, active_from_700CE=False):
         self.terrain = terrain
         self.elevation = elevation
-
-        self.littoral = False
+        self.active_from_1500BCE = active_from_1500BCE
+        self.active_from_300CE = active_from_300CE
+        self.active_from_700CE = active_from_700CE
 
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
         self.military_techs = [False]*params.n_military_techs
 
         self.position = (None, None)
         self.neighbours = dict.fromkeys(DIRECTIONS)
+        self.littoral = False
         self.littoral_neighbours = []
 
         self.polity = None

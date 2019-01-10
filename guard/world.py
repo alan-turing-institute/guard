@@ -2,19 +2,21 @@ from . import community, polity
 from .parameters import defaults
 from numpy import sqrt
 from numpy.random import random, permutation
+import yaml
 
 # Container for all communities(tiles) and methods relating to them
 class World(object):
-    def __init__(self, xdim, ydim, params=defaults):
-        self.xdim = xdim
-        self.ydim = ydim
-        self.total_tiles = xdim*ydim
-
+    def __init__(self, xdim=0, ydim=0, params=defaults, from_file=None):
         self.params = params
 
-        self.step_number = 0
+        if from_file is not None:
+            self.read_from_yaml(open(from_file, 'r'))
+        else:
+            self.xdim = xdim
+            self.ydim = ydim
+            self.total_tiles = xdim*ydim
 
-        #self.tiles = [None for i in range(self.total_tiles)]
+        self.step_number = 0
 
     def __str__(self):
         string = 'World:\n'
@@ -33,7 +35,11 @@ class World(object):
     def index(self, x, y):
         if any([x < 0, x >= self.xdim, y < 0, y >= self.ydim]):
             return None
-        return self.tiles[x*self.xdim + y]
+        return self.tiles[self._index(x,y)]
+
+    # Returns the position in the tiles list of the tile at coordinates (x,y)
+    def _index(self, x, y):
+        return x + y*self.xdim
 
     # Determine maximum sea attack distance at current step
     def sea_attack_distance(self):
@@ -73,6 +79,7 @@ class World(object):
     # Determine a list of all littoral neighbours and distance for all littoral tiles
     def set_littoral_neighbours(self):
         littoral_tiles = list(filter(lambda tile: tile.littoral == True, self.tiles))
+        #littoral_tiles = [tile for tile in self.tiles if tile.litorral == True]
         n_littoral = len(littoral_tiles)
 
 
@@ -93,6 +100,60 @@ class World(object):
                 # Add neighbour and the symmetric entry
                 itile.littoral_neighbours.append(community.LittoralNeighbour(jtile,distance))
                 jtile.littoral_neighbours.append(community.LittoralNeighbour(itile,distance))
+
+    # Read a world from a YAML file
+    def read_from_yaml(self, yaml_file):
+        # Parse YAML file
+        tile_data = yaml.load(yaml_file)
+
+        # Determine total number of tiles and assign list
+        self.total_tiles = len(tile_data)
+        self.tiles = [None]*self.total_tiles
+
+        # Determine bounds of lattice
+        xmax = 0
+        ymax = 0
+        for tile in tile_data:
+            x, y = tile['x'], tile['y']
+            if x > xmax:
+                xmax = x
+            if y > ymax:
+                ymax = y
+        self.xdim = xmax+1
+        self.ydim = ymax+1
+
+        # Enter world data into tiles list
+        for tile in tile_data:
+            x, y = tile['x'], tile['y']
+
+            assert tile['terrain'] in ['agriculture','steppe','desert','sea']
+            if tile['terrain'] == 'agriculture':
+                terrain = community.Terrain.agriculture
+            elif tile['terrain'] == 'steppe':
+                terrain = community.Terrain.steppe
+            elif tile['terrain'] == 'desert':
+                terrain = community.Terrain.desert
+            elif tile['terrain'] == 'sea':
+                terrain = community.Terrain.sea
+
+            if terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
+                elevation = tile['elevation']
+                active_from_1500BCE = tile['activeFrom1500BCE']
+                active_from_300CE = tile['activeFrom300CE']
+                active_from_700CE = tile['activeFrom700CE']
+
+                self.tiles[self._index(x,y)] = community.Community(self.params, terrain,
+                        elevation, active_from_1500BCE, active_from_300CE,
+                        active_from_700CE)
+            else:
+                self.tiles[self._index(x,y)] = community.Community(self.params, terrain)
+
+        # Initialise neighbours and littoral neighbours
+        self.set_neighbours()
+        self.set_littoral_tiles()
+        self.set_littoral_neighbours()
+        # Each tile is its own polity
+        self.polities = [polity.Polity([tile]) for tile in self.tiles]
 
     # Populate the world with agriculture communities at zero elevation
     def create_flat_agricultural_world(self):

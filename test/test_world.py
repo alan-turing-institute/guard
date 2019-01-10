@@ -201,3 +201,14 @@ def test_step_increment(generate_world):
 
     assert map_.step_number == nsteps
 
+def test_yaml_parsing():
+    map_ = world.World(from_file=context.project_dir+'/data/old_world.yml')
+
+    example_tile = map_.index(29,89)
+    assert example_tile.terrain == community.Terrain.steppe
+    assert example_tile.elevation == 98
+
+    assert map_.total_tiles == 13915
+
+    assert map_.xdim == 115
+    assert map_.ydim == 121
