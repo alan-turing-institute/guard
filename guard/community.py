@@ -12,20 +12,27 @@ class Terrain(Enum):
     sea = auto()
     steppe = auto()
 
+# Agricultural periods
+class Period(Enum):
+    # Agricultural from 1500BCE (the beginning)
+    agri1 = auto()
+    # Agricultural from 300CE
+    agri2 = auto()
+    # Agricultural from 700CE
+    agri3 = auto()
+
 # Littoral neighbour named tuple
 LittoralNeighbour = namedtuple('LittoralNeighbour', ['neighbour', 'distance'])
 
 # Community (tile) class
 class Community(object):
     def __init__(self, params, terrain=Terrain.agriculture, elevation=0,
-            active_from_1500BCE=True, active_from_300CE=False, active_from_700CE=False):
+            active_from=Period.agri1):
         self.terrain = terrain
         self.elevation = elevation
-        self.active_from_1500BCE = active_from_1500BCE
-        self.active_from_300CE = active_from_300CE
-        self.active_from_700CE = active_from_700CE
+        self.active_from = active_from
 
-        if self.active_from_1500BCE:
+        if self.active_from == Period.agri1:
             self.active = True
         else:
             self.active = False

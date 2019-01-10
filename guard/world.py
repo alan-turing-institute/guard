@@ -4,6 +4,11 @@ from numpy import sqrt
 from numpy.random import random, permutation
 import yaml
 
+# Step numbers to activate communities in diffirent agricultural periods
+activation_steps = {0: community.Period.agri1,
+        900: community.Period.agri2,
+        1100: community.Period.agri3}
+
 # Container for all communities(tiles) and methods relating to them
 class World(object):
     def __init__(self, xdim=0, ydim=0, params=defaults, from_file=None):
@@ -138,13 +143,17 @@ class World(object):
 
             if terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
                 elevation = tile['elevation']
-                active_from_1500BCE = tile['activeFrom1500BCE']
-                active_from_300CE = tile['activeFrom300CE']
-                active_from_700CE = tile['activeFrom700CE']
+                agricultural_period = tile['activeFrom']
+
+                if agricultural_period == 'agri1':
+                    active_from = community.Period.agri1
+                elif agricultural_period == 'agri2':
+                    active_from = community.Period.agri2
+                elif agricultural_period == 'agri3':
+                    active_from = community.Period.agri3
 
                 self.tiles[self._index(x,y)] = community.Community(self.params, terrain,
-                        elevation, active_from_1500BCE, active_from_300CE,
-                        active_from_700CE)
+                        elevation, active_from)
             else:
                 self.tiles[self._index(x,y)] = community.Community(self.params, terrain)
 
@@ -188,17 +197,13 @@ class World(object):
     def activate(self):
         new_states = []
 
-        # Activiate communities
-        if self.step == 900:
-            for tile in self.tiles:
-                if tile.active_from_300CE:
-                    tile.active = True
-                    new_states.append(polity.Polity([tile]))
-        elif self.step == 1100:
-            for tile in self.tiles:
-                if tile.active_from_700CE:
-                    tile.active = True
-                    new_states.append(polity.Polity([tile]))
+        # Determine the period
+        period = activation_steps[self.step]
+
+        for tile in self.tiles:
+            if tile.active_from == period:
+                tile.active = True
+                new_states.append(polity.Polity([tile]))
 
         # Append new single community polities to the polities list
         self.polities += new_states
@@ -224,7 +229,7 @@ class World(object):
     # Conduct a simulation step
     def step(self):
         # Activate agricultural communities
-        if self.step in [900, 1100]:
+        if self.step in activation_steps.keys():
             self.activate()
 
         # Attacks
