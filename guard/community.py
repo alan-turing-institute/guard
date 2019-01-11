@@ -184,5 +184,6 @@ class Community(object):
         # Select a tech to share
         selected_tech = randint(params.n_military_techs)
         if self.military_techs[selected_tech] == True:
-            # Share this tech with the target
-            target.military_techs[selected_tech] = True
+            if params.military_tech_spread_probability > random():
+                # Share this tech with the target
+                target.military_techs[selected_tech] = True

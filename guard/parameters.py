@@ -10,6 +10,8 @@ _default_parameters = { \
         'ultrasocietal_attack_coefficient':1, \
         # Defence due to elevation coefficient (gamma in Turchin et al. 2013)
         'elevation_defence_coefficient':4, \
+        # Probability of military technology spreading (sigma in Turchin et al. 2013, unspecified)
+        'military_tech_spread_probability':0.25, \
         # Minimum probability of ethnocide (with no military technologies) (epsilon_min in Turchin et al. 2013)
         'ethnocide_min':0.05, \
         # Maximum probability of ethnocide (with all military technologies) (epsilon_max in Turchin et al. 2013)
