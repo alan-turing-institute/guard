@@ -126,6 +126,9 @@ class World(object):
         self.xdim = xmax+1
         self.ydim = ymax+1
 
+        # Terrains which may form polities
+        polity_forming = [community.Terrain.agriculture, community.Terrain.steppe]
+
         # Enter world data into tiles list
         for tile in tile_data:
             x, y = tile['x'], tile['y']
@@ -140,7 +143,7 @@ class World(object):
             elif tile['terrain'] == 'sea':
                 terrain = community.Terrain.sea
 
-            if terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
+            if terrain in polity_forming:
                 elevation = tile['elevation']
                 agricultural_period = tile['activeFrom']
 
@@ -160,8 +163,9 @@ class World(object):
         self.set_neighbours()
         self.set_littoral_tiles()
         self.set_littoral_neighbours()
-        # Each tile is its own polity
-        self.polities = [polity.Polity([tile]) for tile in self.tiles]
+
+        # Each agricultural tile is its own polity
+        self.polities = [polity.Polity([tile]) for tile in self.tiles if tile.terrain in polity_forming]
 
     # Populate the world with agriculture communities at zero elevation
     def create_flat_agricultural_world(self):

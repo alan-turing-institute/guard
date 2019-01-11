@@ -222,6 +222,7 @@ def test_yaml_parsing():
     assert example_tile.elevation == 98
 
     assert map_.total_tiles == 13915
+    assert map_.number_of_polities() == 2647
 
     assert map_.xdim == 115
     assert map_.ydim == 121
