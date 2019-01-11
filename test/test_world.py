@@ -226,3 +226,5 @@ def test_yaml_parsing():
 
     assert map_.xdim == 115
     assert map_.ydim == 121
+
+    map_.step()

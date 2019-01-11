@@ -144,7 +144,8 @@ class Community(object):
         if target.terrain is Terrain.sea:
             # Sea attack
             # Find a littoral neighbour within range
-            target = choice(self.littoral_neighbours_in_range(sea_attack_distance))
+            in_range = self.littoral_neighbours_in_range(sea_attack_distance)
+            target = in_range[choice(len(in_range))].neighbour
         elif target.terrain not in [Terrain.agriculture, Terrain.steppe]:
             # Don't attack or spread technology to a non-agricultural cell
             return
