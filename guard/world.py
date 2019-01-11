@@ -83,8 +83,7 @@ class World(object):
 
     # Determine a list of all littoral neighbours and distance for all littoral tiles
     def set_littoral_neighbours(self):
-        littoral_tiles = list(filter(lambda tile: tile.littoral == True, self.tiles))
-        #littoral_tiles = [tile for tile in self.tiles if tile.litorral == True]
+        littoral_tiles = [tile for tile in self.tiles if tile.littoral == True]
         n_littoral = len(littoral_tiles)
 
 

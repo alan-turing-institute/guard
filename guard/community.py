@@ -76,7 +76,7 @@ class Community(object):
     # Filter the littoral neighbours list to only include neighbours within
     # a given distance
     def littoral_neighbours_in_range(self, distance):
-        return list(filter(lambda neighbour: neighbour.distance <= distance, self.littoral_neighbours))
+        return [neighbour for neighbour in self.littoral_neighbours if neighbour.distance <= distance]
 
     # Determine the power of an attack from this community (equal to
     # the polities attack power)
