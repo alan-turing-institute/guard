@@ -125,7 +125,7 @@ class Community(object):
             self.polity.transfer_community(target)
 
             # Attempt ethnocide
-            if self.ethnocide_probability(target, params):
+            if self.ethnocide_probability(target, params) > random():
                 target.ultrasocietal_traits = self.ultrasocietal_traits
 
     # Attempt to attack a random neighbour
