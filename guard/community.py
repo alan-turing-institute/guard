@@ -32,13 +32,18 @@ class Community(object):
         self.elevation = elevation
         self.active_from = active_from
 
+        # Communities in the agri1 period are active from the beginning
         if self.active_from == Period.agri1:
             self.active = True
         else:
             self.active = False
 
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
-        self.military_techs = [False]*params.n_military_techs
+        # Steppe communities start with all military technologies
+        if terrain == Terrain.steppe:
+            self.military_techs = [True]*params.n_military_techs
+        else:
+            self.military_techs = [False]*params.n_military_techs
 
         self.position = (None, None)
         self.neighbours = dict.fromkeys(DIRECTIONS)
@@ -140,7 +145,7 @@ class Community(object):
             # Sea attack
             # Find a littoral neighbour within range
             target = choice(self.littoral_neighbours_in_range(sea_attack_distance))
-        elif target.terrain is not Terrain.agriculture:
+        elif target.terrain not in [Terrain.agriculture, Terrain.steppe]:
             # Don't attack or spread technology to a non-agricultural cell
             return
 

@@ -174,7 +174,7 @@ class World(object):
     # Attempt culturual shift in all communities
     def cultural_shift(self):
         for tile in self.tiles:
-            if tile.terrain is community.Terrain.agriculture:
+            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
                 tile.cultural_shift(self.params)
 
     # Attempt disintegration of all polities
@@ -214,7 +214,7 @@ class World(object):
         attack_order = permutation(self.total_tiles)
         for tile_no in attack_order:
             tile = self.tiles[tile_no]
-            if tile.terrain is community.Terrain.agriculture:
+            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
                 if tile.active:
                     tile.attempt_attack(self.params, self.sea_attack_distance())
 

@@ -31,6 +31,12 @@ class TestCommunity(object):
         tile.military_techs = [False]*(params.n_military_techs-techs) + [True]*techs
         assert tile.total_military_techs() == techs
 
+    def test_steppe_community(self, default_parameters):
+        params = default_parameters
+        tile = community.Community(params, terrain=community.Terrain.steppe)
+
+        assert tile.total_military_techs() == params.n_military_techs
+
 # Test cultural shift
 class TestCulturalShift(object):
     def test_shift_to_true(self, custom_parameters, basic_community):
