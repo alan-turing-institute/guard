@@ -59,8 +59,8 @@ class TestCulturalShift(object):
 # Test military technology diffusion
 class TestMilitaryTechDifussion(object):
     # Test a case of certain diffusion
-    def test_tech_diffusion(self, default_parameters, basic_community, advanced_community):
-        params = default_parameters
+    def test_tech_diffusion(self, custom_parameters, basic_community, advanced_community):
+        params = custom_parameters(military_tech_spread_probability=1)
         advanced = advanced_community
         basic = basic_community()
 
