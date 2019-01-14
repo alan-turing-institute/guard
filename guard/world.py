@@ -208,9 +208,6 @@ class World(object):
                 tile.active = True
                 new_states.append(polity.Polity([tile]))
 
-        # Append new single community polities to the polities list
-        self.polities += new_states
-
     # Attempt an attack from all communities
     def attack(self):
         # Generate a random order for communities to attempt attacks in
