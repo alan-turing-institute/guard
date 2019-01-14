@@ -228,6 +228,9 @@ class World(object):
 
     # Conduct a simulation step
     def step(self):
+        # Increment step counter
+        self.step_number += 1
+
         # Activate agricultural communities
         if self.step in activation_steps.keys():
             self.activate()
@@ -240,6 +243,3 @@ class World(object):
 
         # Disintegration
         self.disintegration()
-
-        # Increment step counter
-        self.step_number += 1
