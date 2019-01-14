@@ -222,9 +222,7 @@ class World(object):
 
     # Prune polities with zero communities
     def prune_empty_polities(self):
-        for state in self.polities:
-            if state.size() == 0:
-                self.polities.remove(state)
+        self.polities[:] = [state for state in self.polities if state.size() is not 0 ]
 
     # Conduct a simulation step
     def step(self):
