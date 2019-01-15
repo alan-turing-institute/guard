@@ -208,9 +208,6 @@ class World(object):
                 tile.active = True
                 new_states.append(polity.Polity([tile]))
 
-        # Append new single community polities to the polities list
-        self.polities += new_states
-
     # Attempt an attack from all communities
     def attack(self):
         # Generate a random order for communities to attempt attacks in
@@ -225,12 +222,13 @@ class World(object):
 
     # Prune polities with zero communities
     def prune_empty_polities(self):
-        for state in self.polities:
-            if state.size() == 0:
-                self.polities.remove(state)
+        self.polities[:] = [state for state in self.polities if state.size() is not 0 ]
 
     # Conduct a simulation step
     def step(self):
+        # Increment step counter
+        self.step_number += 1
+
         # Activate agricultural communities
         if self.step in activation_steps.keys():
             self.activate()
@@ -243,6 +241,3 @@ class World(object):
 
         # Disintegration
         self.disintegration()
-
-        # Increment step counter
-        self.step_number += 1
