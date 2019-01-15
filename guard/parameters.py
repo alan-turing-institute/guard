@@ -40,14 +40,21 @@ _default_parameters = { \
 # Paramteres named tuple constructor
 _Parameters = namedtuple('Parameters', _default_parameters.keys())
 
+# Exception for attempting to define an invalid parameter
+class ParameterKeyException(Exception):
+    pass
+
 # Generate a parameter set from the default set with any adjustments provided
 # keyword arguments
 def generate(**kwargs):
-    parameters = _default_parameters
+    parameters = _default_parameters.copy()
     # Override defaults
     for key, value in kwargs.items():
-        if key in parameters:
+        try:
+            assert key in parameters
             parameters[key] = value
+        except:
+            raise ParameterKeyException('Invalid parameter: {}'.format(key))
 
     return _Parameters(*parameters.values())
 
