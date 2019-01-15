@@ -5,7 +5,7 @@ from numpy.random import random, permutation
 import yaml
 
 # Step numbers to activate communities in diffirent agricultural periods
-activation_steps = {0: community.Period.agri1,
+activation_steps = {1: community.Period.agri1,
         900: community.Period.agri2,
         1100: community.Period.agri3}
 
@@ -85,7 +85,6 @@ class World(object):
     def set_littoral_neighbours(self):
         littoral_tiles = [tile for tile in self.tiles if tile.littoral == True]
         n_littoral = len(littoral_tiles)
-
 
         for tile in littoral_tiles:
             # Add self as a littoral neighbour with 0 distance, this is important
@@ -168,8 +167,10 @@ class World(object):
         self.polities = [polity.Polity([tile]) for tile in self.tiles if tile.terrain in polity_forming]
 
     # Populate the world with agriculture communities at zero elevation
-    def create_flat_agricultural_world(self):
+    def create_flat_agricultural_world(self, steppes=[]):
         self.tiles = [community.Community(self.params) for i in range(self.total_tiles)]
+        for coordinate in steppes:
+            self.tiles[self._index(coordinate[0], coordinate[1])] = community.Community(self.params, community.Terrain.steppe)
         self.set_neighbours()
         # Each tile is its own polity
         self.polities = [polity.Polity([tile]) for tile in self.tiles]
@@ -198,15 +199,13 @@ class World(object):
 
     # Activate agricultural communities
     def activate(self):
-        new_states = []
-
         # Determine the period
-        period = activation_steps[self.step]
+        period = activation_steps[self.step_number]
 
         for tile in self.tiles:
-            if tile.active_from == period:
-                tile.active = True
-                new_states.append(polity.Polity([tile]))
+            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
+                if tile.active_from == period:
+                    tile.active = True
 
     # Attempt an attack from all communities
     def attack(self):
@@ -230,7 +229,7 @@ class World(object):
         self.step_number += 1
 
         # Activate agricultural communities
-        if self.step in activation_steps.keys():
+        if self.step_number in activation_steps.keys():
             self.activate()
 
         # Attacks

@@ -33,10 +33,10 @@ class Community(object):
         self.active_from = active_from
 
         # Communities in the agri1 period are active from the beginning
-        if self.active_from == Period.agri1:
-            self.active = True
-        else:
-            self.active = False
+        self.active = False
+        if terrain in [Terrain.agriculture, Terrain.steppe]:
+            if self.active_from == Period.agri1:
+                self.active = True
 
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
         # Steppe communities start with all military technologies
@@ -152,7 +152,7 @@ class Community(object):
 
         # Ensure target is active (agricultural at the current time), otherwise
         # don't attack or spread technology
-        if not target.active:
+        if target.active == False:
             return
 
         # Don't attack a neighbour in the same polity, but do spread technology

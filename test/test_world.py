@@ -183,11 +183,11 @@ def test_community_activation(generate_world):
 
     assert len([tile for tile in map_.tiles if tile.active == True]) == 1
 
-    map_.step = 900
+    map_.step_number = 900
     map_.activate()
     assert len([tile for tile in map_.tiles if tile.active == True]) == 2
 
-    map_.step = 1100
+    map_.step_number = 1100
     map_.activate()
     assert len([tile for tile in map_.tiles if tile.active == True]) == 3
 
