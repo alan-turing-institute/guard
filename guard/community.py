@@ -105,7 +105,7 @@ class Community(object):
         probability = params.ethnocide_min
         probability += (params.ethnocide_max - params.ethnocide_min) * \
                 self.total_military_techs() / params.n_military_techs
-        probability -= params.ethnocide_elevation_coefficient * target.elevation
+        probability -= params.ethnocide_elevation_coefficient * target.elevation / 1000
 
         #Ensure probability is in the range [0,1]
         if probability < 0:
