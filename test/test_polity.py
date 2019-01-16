@@ -67,20 +67,15 @@ class TestPolity(object):
 class TestDisintegration(object):
     # Calculate the disintegration probability
     def disintegration_probability(self, params, size, mean_traits):
-        probability = params.disintegration_base
-        probability += params.disintegration_size_coefficient*size
-        probability -= params.disintegration_ultrasocietal_trait_coefficient * \
-                mean_traits
+        probability = params.disintegration_size_coefficient*size - \
+                params.disintegration_ultrasocietal_trait_coefficient*mean_traits
 
-        # Ensure probability is in the range [0,1]
-        if probability < 0:
-            probability = 0
-        elif probability > 1:
-            probability = 1
+        if probability > 0:
+            return min(params.disintegration_base + probability, 1)
+        else:
+            return params.disintegration_base
 
-        return probability
-
-    # Ensure the minimum probability is 0
+    # Ensure the minimum probability
     def test_negative_disintegration_probability(self, default_parameters, polity_10):
         params = default_parameters
         size = 10
@@ -90,7 +85,7 @@ class TestDisintegration(object):
         set_ultrasocietal_traits(params, state, traits)
 
         probability = self.disintegration_probability(params, size, mean_traits)
-        assert probability == state.disintegrate_probability(params) == 0
+        assert probability == state.disintegrate_probability(params) == params.disintegration_base
 
     # Ensure the maximum probability is 1
     def test_large_disintegration_probability(self, default_parameters, arbitrary_polity):
