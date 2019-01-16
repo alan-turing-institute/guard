@@ -128,7 +128,7 @@ class Community(object):
 
             # Attempt ethnocide
             if self.ethnocide_probability(target, params) > random():
-                target.ultrasocietal_traits = self.ultrasocietal_traits
+                target.ultrasocietal_traits[:] = self.ultrasocietal_traits
 
     # Attempt to attack a random neighbour
     def attempt_attack(self, params, sea_attack_distance):
