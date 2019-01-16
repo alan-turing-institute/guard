@@ -33,10 +33,10 @@ class Community(object):
         self.active_from = active_from
 
         # Communities in the agri1 period are active from the beginning
-        if self.active_from == Period.agri1:
-            self.active = True
-        else:
-            self.active = False
+        self.active = False
+        if terrain in [Terrain.agriculture, Terrain.steppe]:
+            if self.active_from == Period.agri1:
+                self.active = True
 
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
         # Steppe communities start with all military technologies
@@ -84,14 +84,16 @@ class Community(object):
         return self.polity.attack_power(params)
 
     # Determine the power of this community in defending
-    def defence_power(self, params):
-        return self.polity.attack_power(params) + \
-                params.elevation_defence_coefficient * self.elevation / 1000.
+    def defence_power(self, params, sea_attack):
+        power = self.polity.attack_power(params)
+        if not sea_attack:
+                power += params.elevation_defence_coefficient * self.elevation / 1000.
+        return power
 
     # Determine the probability of a successful attack
-    def success_probability(self, target, params):
+    def success_probability(self, target, params, sea_attack):
         power_attacker = self.attack_power(params)
-        power_defender = target.defence_power(params)
+        power_defender = target.defence_power(params, sea_attack)
 
         success = (power_attacker - power_defender) / (power_attacker + power_defender)
         # Ensure probability is in the range [0,1]
@@ -105,7 +107,7 @@ class Community(object):
         probability = params.ethnocide_min
         probability += (params.ethnocide_max - params.ethnocide_min) * \
                 self.total_military_techs() / params.n_military_techs
-        probability -= params.ethnocide_elevation_coefficient * target.elevation
+        probability -= params.ethnocide_elevation_coefficient * target.elevation / 1000
 
         #Ensure probability is in the range [0,1]
         if probability < 0:
@@ -116,9 +118,9 @@ class Community(object):
         return probability
 
     # Conduct an attack
-    def attack(self, target, params, probability=None):
+    def attack(self, target, params, sea_attack, probability=None):
         if probability == None:
-            probability = self.success_probability(target, params)
+            probability = self.success_probability(target, params, sea_attack)
         # Determine whether attack was successful
         if probability > random():
             # Transfer defending community to attacker's polity
@@ -126,13 +128,14 @@ class Community(object):
 
             # Attempt ethnocide
             if self.ethnocide_probability(target, params) > random():
-                target.ultrasocietal_traits = self.ultrasocietal_traits
+                target.ultrasocietal_traits[:] = self.ultrasocietal_traits
 
     # Attempt to attack a random neighbour
     def attempt_attack(self, params, sea_attack_distance):
         direction = choice(DIRECTIONS)
         target = self.neighbours[direction]
 
+        sea_attack = False
         proceed = True
 
         # Don't attack or spread technology to an empty neighbour
@@ -146,13 +149,14 @@ class Community(object):
             # Find a littoral neighbour within range
             in_range = self.littoral_neighbours_in_range(sea_attack_distance)
             target = in_range[choice(len(in_range))].neighbour
+            sea_attack = True
         elif target.terrain not in [Terrain.agriculture, Terrain.steppe]:
             # Don't attack or spread technology to a non-agricultural cell
             return
 
         # Ensure target is active (agricultural at the current time), otherwise
         # don't attack or spread technology
-        if not target.active:
+        if target.active == False:
             return
 
         # Don't attack a neighbour in the same polity, but do spread technology
@@ -161,7 +165,7 @@ class Community(object):
 
         # Conduct an attack if there is no reason not to
         if proceed:
-            self.attack(target, params)
+            self.attack(target, params, sea_attack=sea_attack)
 
         # Attempt to diffuse military technology regardless of whether the attack
         # proceeded or was successful

@@ -1,5 +1,3 @@
-from . import community
-
 # Polity class
 class Polity(object):
     def __init__(self,communities):
@@ -34,6 +32,13 @@ class Polity(object):
         community.polity.remove_community(community)
         self.add_community(community)
 
+    # Disintegrate the polity returning a list of new polities, one for each
+    # community
+    def disintegrate(self):
+        new_polities = [Polity([tile]) for tile in self.communities]
+        self.communities = []
+        return new_polities
+
     # Determine the size of the polity (in communities)
     def size(self):
         return len(self.communities)
@@ -41,7 +46,7 @@ class Polity(object):
     # Calculate the mean number of ultrasocietal traits of the communities of
     # this polity
     def mean_ultrasocietal_traits(self):
-        return sum([community.total_ultrasocietal_traits() for community in self.communities]) / len(self.communities)
+        return sum([community.total_ultrasocietal_traits() for community in self.communities]) / self.size()
 
     # Calculate the polities attack power
     # The attack power is the mean number of ultrasocietal traits in the
@@ -49,28 +54,19 @@ class Polity(object):
     # the size of the polity is omitted in the mean and multiplication to
     # save calculation time.
     def attack_power(self, params):
-        power = 0
-        for community in self.communities:
-            power += community.total_ultrasocietal_traits()
+        power = sum([community.total_ultrasocietal_traits() for community in self.communities])
         power *= params.ultrasocietal_attack_coefficient
         power += 1.
         return power
 
     # Determine the probability that the polity with disintegrate
     def disintegrate_probability(self, params):
-        # Determine probability
-        probability = params.disintegration_base
-        probability += params.disintegration_size_coefficient * self.size()
-        probability -= params.disintegration_ultrasocietal_trait_coefficient * \
-                self.mean_ultrasocietal_traits()
-
-        # Ensure probability is in the range [0,1]
+        probability = params.disintegration_size_coefficient * self.size() - \
+                params.disintegration_ultrasocietal_trait_coefficient * self.mean_ultrasocietal_traits()
         if probability < 0:
-            probability = 0
-        elif probability > 1:
-            probability =1
-
-        return probability
+            return params.disintegration_base
+        else:
+            return min(params.disintegration_base + probability, 1)
 
     # Attempt cultural shift on all communities
     def cultural_shift(self, params):

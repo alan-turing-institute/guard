@@ -13,8 +13,8 @@ def custom_parameters():
 
 @pytest.fixture
 def generate_world():
-    def _generate_world(xdim,ydim):
-        map_ = world.World(xdim,ydim)
+    def _generate_world(xdim,ydim,params=parameters.defaults):
+        map_ = world.World(xdim,ydim,params=params)
         map_.create_flat_agricultural_world()
         return map_
     return _generate_world
