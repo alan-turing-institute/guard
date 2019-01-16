@@ -34,6 +34,13 @@ class Polity(object):
         community.polity.remove_community(community)
         self.add_community(community)
 
+    # Disintegrate the polity returning a list of new polities, one for each 
+    # community
+    def disintegrate(self):
+        new_polities = [Polity([tile]) for tile in self.communities]
+        self.communities = []
+        return new_polities
+
     # Determine the size of the polity (in communities)
     def size(self):
         return len(self.communities)

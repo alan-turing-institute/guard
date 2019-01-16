@@ -185,14 +185,15 @@ class World(object):
     def disintegration(self):
         new_states = []
         for state in self.polities:
-            probability = state.disintegrate_probability(self.params)
-
-            if probability > random():
+            # Skip single community polities
+            if state.size() == 1:
+                continue
+            if state.disintegrate_probability(self.params) > random():
                 # Create a new set of polities, one for each of the communities
-                for tile in state.communities:
-                    new_states.append(polity.Polity([tile]))
-                # Destroy the old polity
-                self.polities.remove(state)
+                new_states += state.disintegrate()
+
+        # Delete the now empy polities
+        self.prune_empty_polities()
 
         # Append new polities from disintegrated old polities to list
         self.polities += new_states

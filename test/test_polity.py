@@ -65,6 +65,17 @@ class TestPolity(object):
 
 # Test disintegration method
 class TestDisintegration(object):
+    # Ensure disintegration works correctly
+    def test_disintegration(self, default_parameters, polity_10):
+        params = default_parameters
+        state = polity_10
+
+        new_states = state.disintegrate()
+        assert state.size() == 0
+        assert all([polity.size() == 1 for polity in new_states])
+        assert all([polity.communities[0].polity != state for polity in new_states])
+        assert all([polity.communities[0].polity == polity for polity in new_states])
+
     # Calculate the disintegration probability
     def disintegration_probability(self, params, size, mean_traits):
         probability = params.disintegration_size_coefficient*size - \

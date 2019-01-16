@@ -1,5 +1,5 @@
 from . import context
-from . fixtures import default_parameters, generate_world, generate_world_with_sea
+from . fixtures import custom_parameters, default_parameters, generate_world, generate_world_with_sea
 from guard import world, community
 from numpy import sqrt
 import pytest
@@ -151,7 +151,6 @@ class TestLittoralNeighbours(object):
         assert community.LittoralNeighbour(map_.index(0,3),sqrt(13)) in in_range
         assert community.LittoralNeighbour(map_.index(4,3),sqrt(13)) in in_range
 
-
 def test_destruction_of_empty_polities(default_parameters, generate_world):
     params = default_parameters
     dimension = 5
@@ -165,6 +164,24 @@ def test_destruction_of_empty_polities(default_parameters, generate_world):
     map_.prune_empty_polities()
 
     assert len(map_.polities) == initial_polities - 1
+
+def test_disintegration(custom_parameters, generate_world):
+    dimension = 5
+    params = custom_parameters(disintegration_base=1000)
+    map_ = generate_world(xdim=dimension,ydim=dimension,params=params)
+
+    for tile in map_.tiles[1:4]:
+        map_.polities[0].transfer_community(tile)
+    map_.prune_empty_polities()
+
+    for tile in map_.tiles[5:]:
+        map_.polities[1].transfer_community(tile)
+    map_.prune_empty_polities()
+
+    assert map_.number_of_polities() == 2
+    map_.disintegration()
+    assert map_.number_of_polities() == 25
+    assert all([state.size() == 1 for state in map_.polities])
 
 def test_step(generate_world):
     map_ = generate_world(xdim=5,ydim=5)
