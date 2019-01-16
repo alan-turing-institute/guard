@@ -41,32 +41,98 @@ class ImperialDensity(object):
             self.imperial_density_eras.append(self.imperial_density * _NORMALISATION_FACTOR)
             self.imperial_density = np.zeros([self.world.xdim, self.world.ydim])
 
-    def export(self, highlight_desert=False, highlight_steppe=False):
+    def export(self, normalise=False, highlight_desert=False, highlight_steppe=False):
         for i,era in enumerate(self.imperial_density_eras):
-            # Initialise figure and axis
-            fig = plt.figure()
-            ax = fig.subplots()
-
-            # Hide axes ticks
-            ax.get_xaxis().set_visible(False)
-            ax.get_yaxis().set_visible(False)
+            fig, ax, colour_map = _init_world_plot()
 
             # Express data as RGBA values
-            colour_map = plt.get_cmap('RdYlGn').reversed()
+            if normalise:
+                era = era / np.max(era)
             plot_data = colour_map(era)
 
-            # Colour sea and optionally desert
-            for tile in self.world.tiles:
-                x, y = tile.position[0], tile.position[1]
-                if tile.terrain is community.Terrain.sea:
-                    plot_data[x][y] = _SEA
-                elif tile.terrain is community.Terrain.desert:
-                    if highlight_desert:
-                        plot_data[x][y] = _DESERT
-                elif tile.terrain is community.Terrain.steppe:
-                    if highlight_steppe:
-                        plot_data[x][y] = _STEPPE
+            plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
 
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
             fig.colorbar(im)
-            fig.savefig('{}.pdf'.format(i), format='pdf')
+            fig.savefig('era_{:d}.pdf'.format(i+1), format='pdf')
+
+def _init_world_plot():
+        # Initialise figure and axis
+        fig = plt.figure()
+        ax = fig.subplots()
+
+        # Hide axes ticks
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+        # Colour map
+        colour_map = plt.get_cmap('RdYlGn').reversed()
+
+        return fig, ax, colour_map
+
+def _colour_special_tiles(rgba_data, world, highlight_desert=False, highlight_steppe=False):
+        # Colour sea and optionally desert
+        for tile in world.tiles:
+            x, y = tile.position[0], tile.position[1]
+            if tile.terrain is community.Terrain.sea:
+                rgba_data[x][y] = _SEA
+            elif tile.terrain is community.Terrain.desert:
+                if highlight_desert:
+                    rgba_data[x][y] = _DESERT
+            elif tile.terrain is community.Terrain.steppe:
+                if highlight_steppe:
+                    rgba_data[x][y] = _STEPPE
+        return rgba_data
+
+def plot_military_techs(world, highlight_desert=False, highlight_steppe=False):
+        fig, ax, colour_map = _init_world_plot()
+
+        # Prepare data
+        plot_data = np.array(
+                [ [world.index(x,y).total_military_techs() for y in range(world.ydim)]
+                    for x in range(world.xdim)])
+        plot_data = plot_data / world.params.n_military_techs
+
+        # Generate rgba data
+        plot_data = colour_map(plot_data)
+        plot_data = _colour_special_tiles(plot_data, world, highlight_desert, highlight_steppe)
+
+        im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
+        fig.colorbar(im)
+        fig.savefig('military_techs_{:04d}.pdf'.format(world.step_number), format='pdf')
+
+def plot_ultrasocietal_traits(world, highlight_desert=False, highlight_steppe=False):
+        fig, ax, colour_map = _init_world_plot()
+
+        # Prepare data
+        plot_data = np.array(
+                [ [world.index(x,y).total_ultrasocietal_traits() for y in range(world.ydim)]
+                    for x in range(world.xdim)])
+        plot_data = plot_data / world.params.n_ultrasocietal_traits
+
+        # Generate rgba data
+        plot_data = colour_map(plot_data)
+        plot_data = _colour_special_tiles(plot_data, world, highlight_desert, highlight_steppe)
+
+        im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
+        fig.colorbar(im)
+        fig.savefig('ultrasocietal_traits_{:04d}.pdf'.format(world.step_number), format='pdf')
+
+
+def plot_active_agriculture(world, highlight_desert=False, highlight_steppe=False):
+        fig, ax, colour_map = _init_world_plot()
+
+        # Prepare data
+        active_tiles = [tile for tile in world.tiles if tile.active == True]
+        plot_data = np.zeros([world.xdim, world.ydim])
+        for tile in active_tiles:
+            x, y = tile.position
+            plot_data[x][y] = 1.
+
+        # Generate rgba data
+        plot_data = colour_map(plot_data)
+        plot_data = _colour_special_tiles(plot_data, world, highlight_desert, highlight_steppe)
+
+        im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
+        fig.colorbar(im)
+        fig.savefig('active_{:04d}.pdf'.format(world.step_number), format='pdf')
