@@ -1,5 +1,3 @@
-from . import community
-
 # Polity class
 class Polity(object):
     def __init__(self,communities):
@@ -34,7 +32,7 @@ class Polity(object):
         community.polity.remove_community(community)
         self.add_community(community)
 
-    # Disintegrate the polity returning a list of new polities, one for each 
+    # Disintegrate the polity returning a list of new polities, one for each
     # community
     def disintegrate(self):
         new_polities = [Polity([tile]) for tile in self.communities]
@@ -56,9 +54,7 @@ class Polity(object):
     # the size of the polity is omitted in the mean and multiplication to
     # save calculation time.
     def attack_power(self, params):
-        power = 0
-        for community in self.communities:
-            power += community.total_ultrasocietal_traits()
+        power = sum([community.total_ultrasocietal_traits() for community in self.communities])
         power *= params.ultrasocietal_attack_coefficient
         power += 1.
         return power
