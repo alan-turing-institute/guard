@@ -33,8 +33,9 @@ class TestSuccessProbability(object):
         params = default_parameters
         attacker = weak_polity.communities[0]
         defender = strong_polity.communities[0]
+        sea_attack = False
 
-        probability = attacker.success_probability(defender, params)
+        probability = attacker.success_probability(defender, params, sea_attack)
 
         assert probability == 0
 
@@ -43,8 +44,9 @@ class TestSuccessProbability(object):
         params = default_parameters
         attacker = strong_polity.communities[0]
         defender = weak_polity.communities[0]
+        sea_attack = False
 
-        probability = attacker.success_probability(defender, params)
+        probability = attacker.success_probability(defender, params, sea_attack)
 
         assert probability == 0.9900990099009901
 
@@ -55,11 +57,13 @@ class TestAttack(object):
         params = default_parameters
         attacker = strong_polity
         defender = mediocre_polity
+        sea_attack = False
 
         attacking_community = attacker.communities[4]
         defending_community = defender.communities[1]
 
-        attacking_community.attack(target=defending_community, params=params, probability=1)
+        attacking_community.attack(target=defending_community, params=params,
+                sea_attack=sea_attack, probability=1)
 
         assert all([attacker.size() == 21, defender.size() == 4, \
                 defending_community in attacker.communities, \

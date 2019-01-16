@@ -157,10 +157,11 @@ def test_destruction_of_empty_polities(default_parameters, generate_world):
     dimension = 5
     initial_polities = dimension**2
     map_ = generate_world(xdim=dimension,ydim=dimension)
+    sea_attack = False
 
     attacker = map_.polities[0].communities[0]
     # Initiate an attack guaranteed to succeed
-    attacker.attack(attacker.neighbours['up'], params, probability=1)
+    attacker.attack(attacker.neighbours['up'], params, sea_attack, probability=1)
     map_.prune_empty_polities()
 
     assert len(map_.polities) == initial_polities - 1

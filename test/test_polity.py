@@ -145,7 +145,19 @@ class TestCommunitiesInPolity(object):
 
         defence_power = state.attack_power(params) + \
                 params.elevation_defence_coefficient * elevation / 1000
-        assert defence_power == state.communities[index].defence_power(params)
+        assert defence_power == state.communities[index].defence_power(params, sea_attack=False)
+
+    # Calculate the defensive power of a community in a sea attack
+    def test_community_defence_power_sea(self, default_parameters, polity_10, example_traits):
+        params = default_parameters
+        state = polity_10
+        traits, _ = example_traits
+        set_ultrasocietal_traits(params, state, traits)
+        elevation = 50
+        index = 4
+        state.communities[index].elevation = elevation
+
+        assert state.attack_power(params) == state.communities[index].defence_power(params, sea_attack=True)
 
 # Test attempting cultural shift on all communities in a polity
 class TestCulturalShift(object):
