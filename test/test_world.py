@@ -1,6 +1,6 @@
 from . import context
 from . fixtures import custom_parameters, default_parameters, generate_world, generate_world_with_sea
-from guard import world, community
+from guard import world, community, terrain
 from numpy import sqrt
 import pytest
 
@@ -199,22 +199,20 @@ def test_step_increment(generate_world):
 def test_community_activation(generate_world):
     map_ = world.World(from_file=context.project_dir+'/test/data/test_activation.yml')
 
-    assert len([tile for tile in map_.tiles if tile.active == True]) == 1
+    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 1
 
     map_.step_number = 900
-    map_.activate()
-    assert len([tile for tile in map_.tiles if tile.active == True]) == 2
+    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 2
 
     map_.step_number = 1100
-    map_.activate()
-    assert len([tile for tile in map_.tiles if tile.active == True]) == 3
+    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 3
 
 def test_yaml_parsing():
     map_ = world.World(from_file=context.project_dir+'/data/old_world.yml')
 
     example_tile = map_.index(29,89)
-    assert example_tile.terrain == community.Terrain.steppe
-    assert example_tile.elevation == 98
+    assert example_tile.terrain == terrain.steppe
+    assert example_tile.elevation == 98 / 1000.
 
     assert map_.total_tiles == 13915
     assert map_.number_of_polities() == 2647

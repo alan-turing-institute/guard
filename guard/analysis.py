@@ -1,4 +1,4 @@
-from . import community
+from . import community, terrain
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -28,8 +28,9 @@ class ImperialDensity(object):
 
     def sample(self):
         # Create list of tiles to sample, only tiles with agriculture
-        agricultural_tiles = [tile for tile in self.world.tiles if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]]
-        agricultural_tiles[:] = [tile for tile in agricultural_tiles if tile.active]
+        agricultural_tiles = [tile for tile in self.world.tiles if tile.terrain.polity_forming]
+        agricultural_tiles[:] = [tile for tile in agricultural_tiles \
+                if tile.is_active(self.world.step_number)]
 
         for tile in agricultural_tiles:
             if tile.polity.size() > _LARGE_POLITY_THRESHOLD:
@@ -74,12 +75,12 @@ def _colour_special_tiles(rgba_data, world, highlight_desert=False, highlight_st
         # Colour sea and optionally desert
         for tile in world.tiles:
             x, y = tile.position[0], tile.position[1]
-            if tile.terrain is community.Terrain.sea:
+            if tile.terrain is terrain.sea:
                 rgba_data[x][y] = _SEA
-            elif tile.terrain is community.Terrain.desert:
+            elif tile.terrain is terrain.desert:
                 if highlight_desert:
                     rgba_data[x][y] = _DESERT
-            elif tile.terrain is community.Terrain.steppe:
+            elif tile.terrain is terrain.steppe:
                 if highlight_steppe:
                     rgba_data[x][y] = _STEPPE
         return rgba_data
@@ -123,7 +124,7 @@ def plot_active_agriculture(world, highlight_desert=False, highlight_steppe=Fals
         fig, ax, colour_map = _init_world_plot()
 
         # Prepare data
-        active_tiles = [tile for tile in world.tiles if tile.active == True]
+        active_tiles = [tile for tile in world.tiles if tile.is_active(world.step_number) == True]
         plot_data = np.zeros([world.xdim, world.ydim])
         for tile in active_tiles:
             x, y = tile.position

@@ -8280,12 +8280,12 @@
   y: 73
 - activeFrom: agri1
   elevation: 380
-  terrain: agriculture
+  terrain: steppe
   x: 34
   y: 74
 - activeFrom: agri1
   elevation: 299
-  terrain: agriculture
+  terrain: steppe
   x: 34
   y: 75
 - activeFrom: agri1
@@ -8657,37 +8657,37 @@
   y: 73
 - activeFrom: agri1
   elevation: 753
-  terrain: agriculture
+  terrain: steppe
   x: 35
   y: 74
 - activeFrom: agri1
   elevation: 690
-  terrain: agriculture
+  terrain: steppe
   x: 35
   y: 75
 - activeFrom: agri1
   elevation: 787
-  terrain: agriculture
+  terrain: steppe
   x: 35
   y: 76
 - activeFrom: agri1
   elevation: 973
-  terrain: agriculture
+  terrain: steppe
   x: 35
   y: 77
 - activeFrom: agri1
   elevation: 764
-  terrain: agriculture
+  terrain: steppe
   x: 35
   y: 78
 - activeFrom: agri1
   elevation: 425
-  terrain: agriculture
+  terrain: steppe
   x: 35
   y: 79
 - activeFrom: agri1
   elevation: 447
-  terrain: agriculture
+  terrain: steppe
   x: 35
   y: 80
 - activeFrom: agri1
@@ -9042,17 +9042,17 @@
   y: 77
 - activeFrom: agri1
   elevation: 567
-  terrain: agriculture
+  terrain: steppe
   x: 36
   y: 78
 - activeFrom: agri1
   elevation: 430
-  terrain: agriculture
+  terrain: steppe
   x: 36
   y: 79
 - activeFrom: agri1
   elevation: 381
-  terrain: agriculture
+  terrain: steppe
   x: 36
   y: 80
 - activeFrom: agri1

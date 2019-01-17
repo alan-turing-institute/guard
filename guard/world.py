@@ -1,13 +1,8 @@
-from . import community, polity
+from . import community, polity, terrain, period
 from .parameters import defaults
 from numpy import sqrt
 from numpy.random import random, permutation
 import yaml
-
-# Step numbers to activate communities in diffirent agricultural periods
-activation_steps = {1: community.Period.agri1,
-        900: community.Period.agri2,
-        1100: community.Period.agri3}
 
 # Container for all communities(tiles) and methods relating to them
 class World(object):
@@ -66,7 +61,7 @@ class World(object):
     def set_littoral_tiles(self):
         for tile in self.tiles:
             # Don't set littoral status for sea or desert tiles
-            if tile.terrain in [community.Terrain.sea, community.Terrain.desert]:
+            if not tile.terrain.polity_forming:
                 continue
 
             for direction in community.DIRECTIONS:
@@ -75,7 +70,7 @@ class World(object):
                 if neighbour == None:
                     continue
                 # Check if neighbour is a sea tile
-                if neighbour.terrain == community.Terrain.sea:
+                if neighbour.terrain is terrain.sea:
                     tile.littoral = True
                     # Break here as only one neighbour needs to be sea for tile to
                     # be littoral
@@ -125,38 +120,35 @@ class World(object):
         self.xdim = xmax+1
         self.ydim = ymax+1
 
-        # Terrains which may form polities
-        polity_forming = [community.Terrain.agriculture, community.Terrain.steppe]
-
         # Enter world data into tiles list
         for tile in tile_data:
             x, y = tile['x'], tile['y']
 
             assert tile['terrain'] in ['agriculture','steppe','desert','sea']
             if tile['terrain'] == 'agriculture':
-                terrain = community.Terrain.agriculture
+                landscape = terrain.agriculture
             elif tile['terrain'] == 'steppe':
-                terrain = community.Terrain.steppe
+                landscape = terrain.steppe
             elif tile['terrain'] == 'desert':
-                terrain = community.Terrain.desert
+                landscape = terrain.desert
             elif tile['terrain'] == 'sea':
-                terrain = community.Terrain.sea
+                landscape = terrain.sea
 
-            if terrain in polity_forming:
-                elevation = tile['elevation']
+            if landscape.polity_forming:
+                elevation = tile['elevation'] / 1000.
                 agricultural_period = tile['activeFrom']
 
                 if agricultural_period == 'agri1':
-                    active_from = community.Period.agri1
+                    active_from = period.agri1
                 elif agricultural_period == 'agri2':
-                    active_from = community.Period.agri2
+                    active_from = period.agri2
                 elif agricultural_period == 'agri3':
-                    active_from = community.Period.agri3
+                    active_from = period.agri3
 
-                self.tiles[self._index(x,y)] = community.Community(self.params, terrain,
+                self.tiles[self._index(x,y)] = community.Community(self.params, landscape,
                         elevation, active_from)
             else:
-                self.tiles[self._index(x,y)] = community.Community(self.params, terrain)
+                self.tiles[self._index(x,y)] = community.Community(self.params, landscape)
 
         # Initialise neighbours and littoral neighbours
         self.set_neighbours()
@@ -164,13 +156,13 @@ class World(object):
         self.set_littoral_neighbours()
 
         # Each agricultural tile is its own polity
-        self.polities = [polity.Polity([tile]) for tile in self.tiles if tile.terrain in polity_forming]
+        self.polities = [polity.Polity([tile]) for tile in self.tiles if tile.terrain.polity_forming]
 
     # Populate the world with agriculture communities at zero elevation
     def create_flat_agricultural_world(self, steppes=[]):
         self.tiles = [community.Community(self.params) for i in range(self.total_tiles)]
         for coordinate in steppes:
-            self.tiles[self._index(coordinate[0], coordinate[1])] = community.Community(self.params, community.Terrain.steppe)
+            self.tiles[self._index(coordinate[0], coordinate[1])] = community.Community(self.params, terrain.steppe)
         self.set_neighbours()
         # Each tile is its own polity
         self.polities = [polity.Polity([tile]) for tile in self.tiles]
@@ -178,7 +170,7 @@ class World(object):
     # Attempt culturual shift in all communities
     def cultural_shift(self):
         for tile in self.tiles:
-            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
+            if tile.terrain.polity_forming:
                 tile.cultural_shift(self.params)
 
     # Attempt disintegration of all polities
@@ -198,25 +190,14 @@ class World(object):
         # Append new polities from disintegrated old polities to list
         self.polities += new_states
 
-    # Activate agricultural communities
-    def activate(self):
-        # Determine the period
-        period = activation_steps[self.step_number]
-
-        for tile in self.tiles:
-            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
-                if tile.active_from == period:
-                    tile.active = True
-
     # Attempt an attack from all communities
     def attack(self):
         # Generate a random order for communities to attempt attacks in
         attack_order = permutation(self.total_tiles)
         for tile_no in attack_order:
             tile = self.tiles[tile_no]
-            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
-                if tile.active:
-                    tile.attempt_attack(self.params, self.sea_attack_distance())
+            if tile.can_attack(self.step_number):
+                tile.attempt_attack(self.params, self.step_number, self.sea_attack_distance())
 
         self.prune_empty_polities()
 
@@ -228,10 +209,6 @@ class World(object):
     def step(self):
         # Increment step counter
         self.step_number += 1
-
-        # Activate agricultural communities
-        if self.step_number in activation_steps.keys():
-            self.activate()
 
         # Attacks
         self.attack()
