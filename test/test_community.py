@@ -1,6 +1,6 @@
 from . import context
 from .fixtures import default_parameters, custom_parameters
-from guard import community, parameters
+from guard import community, parameters, terrain
 import pytest
 
 @pytest.fixture
@@ -33,7 +33,7 @@ class TestCommunity(object):
 
     def test_steppe_community(self, default_parameters):
         params = default_parameters
-        tile = community.Community(params, terrain=community.Terrain.steppe)
+        tile = community.Community(params, landscape=terrain.steppe)
 
         assert tile.total_military_techs() == params.n_military_techs
 

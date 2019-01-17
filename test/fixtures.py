@@ -1,5 +1,5 @@
 import pytest
-from guard import parameters, world, community
+from guard import parameters, world, community, terrain
 
 @pytest.fixture
 def default_parameters():
@@ -27,7 +27,7 @@ def generate_world_with_sea():
 
         for coordinate in sea_tiles:
             x,y = coordinate
-            map_.index(x,y).terrain = community.Terrain.sea
+            map_.index(x,y).terrain = terrain.sea
 
         map_.set_littoral_tiles()
         map_.set_littoral_neighbours()

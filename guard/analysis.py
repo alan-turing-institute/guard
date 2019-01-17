@@ -1,4 +1,4 @@
-from . import community
+from . import community, terrain
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -28,7 +28,7 @@ class ImperialDensity(object):
 
     def sample(self):
         # Create list of tiles to sample, only tiles with agriculture
-        agricultural_tiles = [tile for tile in self.world.tiles if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]]
+        agricultural_tiles = [tile for tile in self.world.tiles if tile.terrain.polity_forming]
         agricultural_tiles[:] = [tile for tile in agricultural_tiles if tile.active]
 
         for tile in agricultural_tiles:
@@ -74,12 +74,12 @@ def _colour_special_tiles(rgba_data, world, highlight_desert=False, highlight_st
         # Colour sea and optionally desert
         for tile in world.tiles:
             x, y = tile.position[0], tile.position[1]
-            if tile.terrain is community.Terrain.sea:
+            if tile.terrain is terrain.sea:
                 rgba_data[x][y] = _SEA
-            elif tile.terrain is community.Terrain.desert:
+            elif tile.terrain is terrain.desert:
                 if highlight_desert:
                     rgba_data[x][y] = _DESERT
-            elif tile.terrain is community.Terrain.steppe:
+            elif tile.terrain is terrain.steppe:
                 if highlight_steppe:
                     rgba_data[x][y] = _STEPPE
         return rgba_data

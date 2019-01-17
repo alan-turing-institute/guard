@@ -1,4 +1,4 @@
-from . import community, polity
+from . import community, polity, terrain
 from .parameters import defaults
 from numpy import sqrt
 from numpy.random import random, permutation
@@ -66,7 +66,7 @@ class World(object):
     def set_littoral_tiles(self):
         for tile in self.tiles:
             # Don't set littoral status for sea or desert tiles
-            if tile.terrain in [community.Terrain.sea, community.Terrain.desert]:
+            if not tile.terrain.polity_forming:
                 continue
 
             for direction in community.DIRECTIONS:
@@ -75,7 +75,7 @@ class World(object):
                 if neighbour == None:
                     continue
                 # Check if neighbour is a sea tile
-                if neighbour.terrain == community.Terrain.sea:
+                if neighbour.terrain is terrain.sea:
                     tile.littoral = True
                     # Break here as only one neighbour needs to be sea for tile to
                     # be littoral
@@ -125,24 +125,21 @@ class World(object):
         self.xdim = xmax+1
         self.ydim = ymax+1
 
-        # Terrains which may form polities
-        polity_forming = [community.Terrain.agriculture, community.Terrain.steppe]
-
         # Enter world data into tiles list
         for tile in tile_data:
             x, y = tile['x'], tile['y']
 
             assert tile['terrain'] in ['agriculture','steppe','desert','sea']
             if tile['terrain'] == 'agriculture':
-                terrain = community.Terrain.agriculture
+                landscape = terrain.agriculture
             elif tile['terrain'] == 'steppe':
-                terrain = community.Terrain.steppe
+                landscape = terrain.steppe
             elif tile['terrain'] == 'desert':
-                terrain = community.Terrain.desert
+                landscape = terrain.desert
             elif tile['terrain'] == 'sea':
-                terrain = community.Terrain.sea
+                landscape = terrain.sea
 
-            if terrain in polity_forming:
+            if landscape.polity_forming:
                 elevation = tile['elevation'] / 1000.
                 agricultural_period = tile['activeFrom']
 
@@ -153,10 +150,10 @@ class World(object):
                 elif agricultural_period == 'agri3':
                     active_from = community.Period.agri3
 
-                self.tiles[self._index(x,y)] = community.Community(self.params, terrain,
+                self.tiles[self._index(x,y)] = community.Community(self.params, landscape,
                         elevation, active_from)
             else:
-                self.tiles[self._index(x,y)] = community.Community(self.params, terrain)
+                self.tiles[self._index(x,y)] = community.Community(self.params, landscape)
 
         # Initialise neighbours and littoral neighbours
         self.set_neighbours()
@@ -164,13 +161,13 @@ class World(object):
         self.set_littoral_neighbours()
 
         # Each agricultural tile is its own polity
-        self.polities = [polity.Polity([tile]) for tile in self.tiles if tile.terrain in polity_forming]
+        self.polities = [polity.Polity([tile]) for tile in self.tiles if tile.terrain.polity_forming]
 
     # Populate the world with agriculture communities at zero elevation
     def create_flat_agricultural_world(self, steppes=[]):
         self.tiles = [community.Community(self.params) for i in range(self.total_tiles)]
         for coordinate in steppes:
-            self.tiles[self._index(coordinate[0], coordinate[1])] = community.Community(self.params, community.Terrain.steppe)
+            self.tiles[self._index(coordinate[0], coordinate[1])] = community.Community(self.params, terrain.steppe)
         self.set_neighbours()
         # Each tile is its own polity
         self.polities = [polity.Polity([tile]) for tile in self.tiles]
@@ -178,7 +175,7 @@ class World(object):
     # Attempt culturual shift in all communities
     def cultural_shift(self):
         for tile in self.tiles:
-            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
+            if tile.terrain.polity_forming:
                 tile.cultural_shift(self.params)
 
     # Attempt disintegration of all polities
@@ -204,7 +201,7 @@ class World(object):
         period = activation_steps[self.step_number]
 
         for tile in self.tiles:
-            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
+            if tile.terrain.polity_forming:
                 if tile.active_from == period:
                     tile.active = True
 

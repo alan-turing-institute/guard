@@ -1,6 +1,6 @@
 from . import context
 from . fixtures import custom_parameters, default_parameters, generate_world, generate_world_with_sea
-from guard import world, community
+from guard import world, community, terrain
 from numpy import sqrt
 import pytest
 
@@ -213,7 +213,7 @@ def test_yaml_parsing():
     map_ = world.World(from_file=context.project_dir+'/data/old_world.yml')
 
     example_tile = map_.index(29,89)
-    assert example_tile.terrain == community.Terrain.steppe
+    assert example_tile.terrain == terrain.steppe
     assert example_tile.elevation == 98 / 1000.
 
     assert map_.total_tiles == 13915

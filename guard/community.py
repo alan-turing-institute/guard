@@ -1,16 +1,10 @@
+from . import terrain
+from .parameters import defaults
 from collections import namedtuple
 from enum import Enum, auto
 from numpy.random import random, randint, choice
-from .parameters import defaults
 
 DIRECTIONS = ('left','right','up','down')
-
-# Terrain types enum
-class Terrain(Enum):
-    agriculture = auto()
-    desert = auto()
-    sea = auto()
-    steppe = auto()
 
 # Agricultural periods
 class Period(Enum):
@@ -26,21 +20,21 @@ LittoralNeighbour = namedtuple('LittoralNeighbour', ['neighbour', 'distance'])
 
 # Community (tile) class
 class Community(object):
-    def __init__(self, params, terrain=Terrain.agriculture, elevation=0,
+    def __init__(self, params, landscape=terrain.agriculture, elevation=0,
             active_from=Period.agri1):
-        self.terrain = terrain
+        self.terrain = landscape
         self.elevation = elevation
         self.active_from = active_from
 
         # Communities in the agri1 period are active from the beginning
         self.active = False
-        if terrain in [Terrain.agriculture, Terrain.steppe]:
+        if landscape.polity_forming:
             if self.active_from == Period.agri1:
                 self.active = True
 
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
         # Steppe communities start with all military technologies
-        if terrain == Terrain.steppe:
+        if landscape == terrain.steppe:
             self.military_techs = [True]*params.n_military_techs
         else:
             self.military_techs = [False]*params.n_military_techs
@@ -71,7 +65,7 @@ class Community(object):
 
     # Detrmine if the community can attack
     def can_attack(self):
-        if self.terrain in [Terrain.agriculture, Terrain.steppe]:
+        if self.terrain.polity_forming:
             if self.active:
                 return True
         return False
@@ -151,13 +145,13 @@ class Community(object):
         if target is None:
             return
 
-        if target.terrain is Terrain.sea:
+        if target.terrain is terrain.sea:
             # Sea attack
             # Find a littoral neighbour within range
             in_range = self.littoral_neighbours_in_range(sea_attack_distance)
             target = in_range[choice(len(in_range))].neighbour
             sea_attack = True
-        elif target.terrain not in [Terrain.agriculture, Terrain.steppe]:
+        elif not target.terrain.polity_forming:
             # Don't attack or spread technology to a non-agricultural cell
             return
 
