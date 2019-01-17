@@ -69,6 +69,13 @@ class Community(object):
     def total_military_techs(self):
         return sum(self.military_techs)
 
+    # Detrmine if the community can attack
+    def can_attack(self):
+        if self.terrain in [Terrain.agriculture, Terrain.steppe]:
+            if self.active:
+                return True
+        return False
+
     # Assign community to a polity
     def assign_to_polity(self, polity):
         self.polity = polity

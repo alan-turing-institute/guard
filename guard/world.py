@@ -214,9 +214,8 @@ class World(object):
         attack_order = permutation(self.total_tiles)
         for tile_no in attack_order:
             tile = self.tiles[tile_no]
-            if tile.terrain in [community.Terrain.agriculture, community.Terrain.steppe]:
-                if tile.active:
-                    tile.attempt_attack(self.params, self.sea_attack_distance())
+            if tile.can_attack():
+                tile.attempt_attack(self.params, self.sea_attack_distance())
 
         self.prune_empty_polities()
 
