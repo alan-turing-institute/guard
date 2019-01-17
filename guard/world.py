@@ -143,7 +143,7 @@ class World(object):
                 terrain = community.Terrain.sea
 
             if terrain in polity_forming:
-                elevation = tile['elevation']
+                elevation = tile['elevation'] / 1000.
                 agricultural_period = tile['activeFrom']
 
                 if agricultural_period == 'agri1':

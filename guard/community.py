@@ -87,7 +87,7 @@ class Community(object):
     def defence_power(self, params, sea_attack):
         power = self.polity.attack_power(params)
         if not sea_attack:
-                power += params.elevation_defence_coefficient * self.elevation / 1000.
+                power += params.elevation_defence_coefficient * self.elevation
         return power
 
     # Determine the probability of a successful attack
@@ -107,7 +107,7 @@ class Community(object):
         probability = params.ethnocide_min
         probability += (params.ethnocide_max - params.ethnocide_min) * \
                 self.total_military_techs() / params.n_military_techs
-        probability -= params.ethnocide_elevation_coefficient * target.elevation / 1000
+        probability -= params.ethnocide_elevation_coefficient * target.elevation
 
         #Ensure probability is in the range [0,1]
         if probability < 0:
