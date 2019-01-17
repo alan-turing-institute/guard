@@ -214,7 +214,7 @@ def test_yaml_parsing():
 
     example_tile = map_.index(29,89)
     assert example_tile.terrain == community.Terrain.steppe
-    assert example_tile.elevation == 98
+    assert example_tile.elevation == 98 / 1000.
 
     assert map_.total_tiles == 13915
     assert map_.number_of_polities() == 2647

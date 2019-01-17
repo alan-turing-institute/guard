@@ -150,7 +150,7 @@ class TestCommunitiesInPolity(object):
         state.communities[index].elevation = elevation
 
         defence_power = state.attack_power(params) + \
-                params.elevation_defence_coefficient * elevation / 1000
+                params.elevation_defence_coefficient * elevation
         assert defence_power == state.communities[index].defence_power(params, sea_attack=False)
 
     # Calculate the defensive power of a community in a sea attack
