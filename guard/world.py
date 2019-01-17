@@ -1,13 +1,8 @@
-from . import community, polity, terrain
+from . import community, polity, terrain, period
 from .parameters import defaults
 from numpy import sqrt
 from numpy.random import random, permutation
 import yaml
-
-# Step numbers to activate communities in diffirent agricultural periods
-activation_steps = {1: community.Period.agri1,
-        900: community.Period.agri2,
-        1100: community.Period.agri3}
 
 # Container for all communities(tiles) and methods relating to them
 class World(object):
@@ -144,11 +139,11 @@ class World(object):
                 agricultural_period = tile['activeFrom']
 
                 if agricultural_period == 'agri1':
-                    active_from = community.Period.agri1
+                    active_from = period.agri1
                 elif agricultural_period == 'agri2':
-                    active_from = community.Period.agri2
+                    active_from = period.agri2
                 elif agricultural_period == 'agri3':
-                    active_from = community.Period.agri3
+                    active_from = period.agri3
 
                 self.tiles[self._index(x,y)] = community.Community(self.params, landscape,
                         elevation, active_from)
@@ -195,24 +190,14 @@ class World(object):
         # Append new polities from disintegrated old polities to list
         self.polities += new_states
 
-    # Activate agricultural communities
-    def activate(self):
-        # Determine the period
-        period = activation_steps[self.step_number]
-
-        for tile in self.tiles:
-            if tile.terrain.polity_forming:
-                if tile.active_from == period:
-                    tile.active = True
-
     # Attempt an attack from all communities
     def attack(self):
         # Generate a random order for communities to attempt attacks in
         attack_order = permutation(self.total_tiles)
         for tile_no in attack_order:
             tile = self.tiles[tile_no]
-            if tile.can_attack():
-                tile.attempt_attack(self.params, self.sea_attack_distance())
+            if tile.can_attack(self.step_number):
+                tile.attempt_attack(self.params, self.step_number, self.sea_attack_distance())
 
         self.prune_empty_polities()
 
@@ -224,10 +209,6 @@ class World(object):
     def step(self):
         # Increment step counter
         self.step_number += 1
-
-        # Activate agricultural communities
-        if self.step_number in activation_steps.keys():
-            self.activate()
 
         # Attacks
         self.attack()

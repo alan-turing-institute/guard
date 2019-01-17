@@ -199,15 +199,13 @@ def test_step_increment(generate_world):
 def test_community_activation(generate_world):
     map_ = world.World(from_file=context.project_dir+'/test/data/test_activation.yml')
 
-    assert len([tile for tile in map_.tiles if tile.active == True]) == 1
+    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 1
 
     map_.step_number = 900
-    map_.activate()
-    assert len([tile for tile in map_.tiles if tile.active == True]) == 2
+    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 2
 
     map_.step_number = 1100
-    map_.activate()
-    assert len([tile for tile in map_.tiles if tile.active == True]) == 3
+    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 3
 
 def test_yaml_parsing():
     map_ = world.World(from_file=context.project_dir+'/data/old_world.yml')
