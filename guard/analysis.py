@@ -11,9 +11,6 @@ _LARGE_POLITY_THRESHOLD = 10
 # Each step is 2 years and the simulation begins at 1500BCE
 _RESET_STEPS = [500,1000,1500]
 
-# Normalisation factor, to ensure imperial density is always in the range [0,1]
-_NORMALISATION_FACTOR = 1/500.
-
 # Colours
 _SEA = np.array([0.25098039, 0.57647059, 0.92941176, 1.])
 _DESERT = np.array([0.7372549 , 0.71372549, 0.25098039, 1.])
@@ -24,6 +21,7 @@ class ImperialDensity(object):
         self.world = world
 
         self.imperial_density = np.zeros([world.xdim, world.ydim])
+        self.samples = 0
         self.imperial_density_eras = []
 
     def sample(self):
@@ -36,11 +34,14 @@ class ImperialDensity(object):
             if tile.polity.size() > _LARGE_POLITY_THRESHOLD:
                 self.imperial_density[tile.position[0], tile.position[1]] += 1.
 
+        self.samples += 1
+
         # Reset accumulated data and store if required
         if self.world.step_number in _RESET_STEPS:
             era = _RESET_STEPS.index(self.world.step_number)
-            self.imperial_density_eras.append(self.imperial_density * _NORMALISATION_FACTOR)
+            self.imperial_density_eras.append(self.imperial_density/self.samples)
             self.imperial_density = np.zeros([self.world.xdim, self.world.ydim])
+            self.samples = 0
 
     def export(self, normalise=False, highlight_desert=False, highlight_steppe=False):
         for i,era in enumerate(self.imperial_density_eras):
