@@ -1,6 +1,7 @@
 from . import community, terrain
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 
 # How many communities a polity requires before it is considered large and is
 # recorded
@@ -57,6 +58,10 @@ class ImperialDensity(object):
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
             fig.colorbar(im)
             fig.savefig('era_{:d}.pdf'.format(i+1), format='pdf')
+
+    def dump(self, outfile):
+        with open(outfile, 'wb') as picklefile:
+            pickle.dump(self.imperial_density_eras, picklefile)
 
 def _init_world_plot():
         # Initialise figure and axis

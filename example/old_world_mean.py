@@ -30,3 +30,4 @@ for era in range(3):
     mean_impd.imperial_density_eras[era] = mean_impd.imperial_density_eras[era] / n_sim
 
 mean_impd.export(normalise=True,highlight_steppe=False)
+mean_impd.dump('./imperial_density.pkl')

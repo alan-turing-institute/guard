@@ -7,7 +7,6 @@ sys.path.insert(0, project_dir)
 
 from guard import world, analysis
 from guard.parameters import defaults
-from guard.community import DIRECTIONS
 
 params = defaults
 
