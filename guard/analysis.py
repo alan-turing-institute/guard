@@ -1,7 +1,9 @@
 from . import community, terrain
+from collections import namedtuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import yaml
 
 # How many communities a polity requires before it is considered large and is
 # recorded
@@ -143,3 +145,51 @@ def plot_active_agriculture(world, highlight_desert=False, highlight_steppe=Fals
         im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
         fig.colorbar(im)
         fig.savefig('active_{:04d}.pdf'.format(world.step_number), format='pdf')
+
+# Date ranges in years and era name strings
+_DateRange = namedtuple('DateRange', ['lower','upper'])
+_date_ranges = {'2500-1000BC': _DateRange(-2500,-1000),
+        '1000BC-0': _DateRange(-1000,0),
+        '0-500AD': _DateRange(0,500),
+        '500AD-1000AD': _DateRange(500,1000),
+        '700-850AD': _DateRange(700,850),
+        '850AD-1000AD': _DateRange(850,1000),
+        '1000AD-1100AD': _DateRange(1000,1100),
+        '1100AD-1200AD': _DateRange(1100,1200),
+        '1200AD-1300AD': _DateRange(1200,1300),
+        '1300AD-1400AD': _DateRange(1300,1400),
+        '1400AD-1500AD': _DateRange(1400,1500)}
+_eras = list(_date_ranges.keys())
+
+class CitiesPopulation(object):
+    def __init__(self, world, data_file):
+        self.world = world
+        # Population in each tile for each era
+        self.population = {era: np.zeros([world.xdim, world.ydim]) for era in _eras}
+
+        # Sum populations from cities and eras
+        with open(data_file, 'r') as yamlfile:
+            cities_data = yaml.load(yamlfile)
+
+            for city in cities_data:
+                for era in _eras:
+                    self.population[era][city['x'],city['y']] += city['population'][era]
+
+    def plot_population_heatmap(self):
+        for era in _eras:
+            fig, ax, colour_map = _init_world_plot()
+
+            plot_data = self.population[era]
+
+            # Normalise
+            vmax = np.max(plot_data)
+            plot_data = plot_data/vmax
+
+            # Create rgb data
+            plot_data = colour_map(plot_data)
+            plot_data = _colour_special_tiles(plot_data, self.world)
+
+
+            im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmax=vmax, vmin=0)
+            fig.colorbar(im)
+            fig.savefig('population_{}.pdf'.format(era))
