@@ -25,3 +25,30 @@ def test_imperial_density_summation(generate_world):
     # Test one more iteration with the same polities
     imperial_density.sample()
     assert np.all(imperial_density.imperial_density == 2.0*test_density)
+
+class TestDateRange(object):
+    def test_label(self):
+        date_range = analysis.DateRange(-5,5)
+
+        assert str(date_range) == '5BC-5AD'
+
+    def test_equivalence(self):
+        date_range = analysis.DateRange(-5,5)
+        date_range2 = analysis.DateRange(-5,5)
+
+        assert date_range == date_range2
+        assert date_range == '5BC-5AD'
+
+    def test_hash(self):
+        date_range = analysis.DateRange(0,500)
+        test_dict = {date_range: 'test'}
+
+        assert test_dict['0-500AD'] == 'test'
+
+def test_population_data(generate_world):
+    map_ = world.World(from_file=context.project_dir+'/test/data/test_imperial_density.yml')
+    cities = analysis.CitiesPopulation(map_, context.project_dir+'/test/data/test_cities.yml')
+
+    assert cities.population['0-500AD'][0,0] == 42000
+    assert cities.population['1000BC-0'][0,0] == 42000
+    assert cities.population['1400AD-1500AD'][2,4] == 400000

@@ -20,6 +20,66 @@ _SEA = np.array([0.25098039, 0.57647059, 0.92941176, 1.])
 _DESERT = np.array([0.7372549 , 0.71372549, 0.25098039, 1.])
 _STEPPE = np.array([0.42745098, 0.        , 0.75686275, 1.])
 
+# A range of dates, used to control sampling periods
+class DateRange(object):
+    def __init__(self, start_year, end_year):
+        assert start_year < end_year
+        self.start_year = start_year
+        self.end_year = end_year
+        self.label = self._create_label()
+
+    def _create_label(self):
+        if self.start_year < 0:
+            label = '{:d}BC-'.format(abs(self.start_year))
+        elif self.start_year == 0:
+            label = '{:d}-'.format(abs(self.start_year))
+        else:
+            label = '{:d}AD-'.format(abs(self.start_year))
+
+        if self.end_year < 0:
+            label += '{:d}BC'.format(abs(self.end_year))
+        elif self.end_year == 0:
+            label += '{:d}'.format(abs(self.end_year))
+        else:
+            label += '{:d}AD'.format(abs(self.end_year))
+
+        return label
+
+    def __str__(self):
+        return self.label
+
+    def __hash__(self):
+        return hash(self.label)
+
+    def __eq__(self, other):
+        if isinstance(other, DateRange):
+            return self.start_year == other.start_year and self.end_year == other.end_year
+        elif isinstance(other, str):
+            return self.label == other
+        else:
+            return False
+
+    # Determine whether a year is within the date range
+    def is_within(self, year):
+        if year >= self.start_year and year < self.end_year:
+            return True
+        else:
+            return False
+
+# Date ranges of cities data
+cities_date_ranges = [DateRange(-2500,-1000),
+        DateRange(-1000,0),
+        DateRange(0,500),
+        DateRange(500,1000),
+        DateRange(700,850),
+        DateRange(850,1000),
+        DateRange(1000,1100),
+        DateRange(1100,1200),
+        DateRange(1200,1300),
+        DateRange(1300,1400),
+        DateRange(1400,1500)]
+
+# Contain and analyse imperial density information
 class ImperialDensity(object):
     def __init__(self, world):
         self.world = world
@@ -66,6 +126,7 @@ class ImperialDensity(object):
         with open(outfile, 'wb') as picklefile:
             pickle.dump(self.imperial_density_eras, picklefile)
 
+# Establish the figure, axis and colourmap for a standard map plot
 def _init_world_plot():
         # Initialise figure and axis
         fig = plt.figure()
@@ -80,6 +141,7 @@ def _init_world_plot():
 
         return fig, ax, colour_map
 
+# Colour sea, steppe and desert tiles distinctly
 def _colour_special_tiles(rgba_data, world, highlight_desert=False, highlight_steppe=False):
         # Colour sea and optionally desert
         for tile in world.tiles:
@@ -94,6 +156,7 @@ def _colour_special_tiles(rgba_data, world, highlight_desert=False, highlight_st
                     rgba_data[x][y] = _STEPPE
         return rgba_data
 
+# Plot a heatmap of military technology level
 def plot_military_techs(world, highlight_desert=False, highlight_steppe=False):
         fig, ax, colour_map = _init_world_plot()
 
@@ -111,6 +174,7 @@ def plot_military_techs(world, highlight_desert=False, highlight_steppe=False):
         fig.colorbar(im)
         fig.savefig('military_techs_{:04d}.pdf'.format(world.step_number), format='pdf')
 
+# Plot a heatmap of ultrasocietal traits
 def plot_ultrasocietal_traits(world, highlight_desert=False, highlight_steppe=False):
         fig, ax, colour_map = _init_world_plot()
 
@@ -128,7 +192,7 @@ def plot_ultrasocietal_traits(world, highlight_desert=False, highlight_steppe=Fa
         fig.colorbar(im)
         fig.savefig('ultrasocietal_traits_{:04d}.pdf'.format(world.step_number), format='pdf')
 
-
+# Plot which regions currently have agriculture
 def plot_active_agriculture(world, highlight_desert=False, highlight_steppe=False):
         fig, ax, colour_map = _init_world_plot()
 
@@ -147,37 +211,25 @@ def plot_active_agriculture(world, highlight_desert=False, highlight_steppe=Fals
         fig.colorbar(im)
         fig.savefig('active_{:04d}.pdf'.format(world.step_number), format='pdf')
 
-# Date ranges in years and era name strings
-_DateRange = namedtuple('DateRange', ['lower','upper'])
-_date_ranges = {'2500-1000BC': _DateRange(-2500,-1000),
-        '1000BC-0': _DateRange(-1000,0),
-        '0-500AD': _DateRange(0,500),
-        '500AD-1000AD': _DateRange(500,1000),
-        '700-850AD': _DateRange(700,850),
-        '850AD-1000AD': _DateRange(850,1000),
-        '1000AD-1100AD': _DateRange(1000,1100),
-        '1100AD-1200AD': _DateRange(1100,1200),
-        '1200AD-1300AD': _DateRange(1200,1300),
-        '1300AD-1400AD': _DateRange(1300,1400),
-        '1400AD-1500AD': _DateRange(1400,1500)}
-_eras = list(_date_ranges.keys())
-
+# Analyse population data of cities
 class CitiesPopulation(object):
-    def __init__(self, world, data_file):
+    def __init__(self, world, data_file, date_ranges=cities_date_ranges):
         self.world = world
+        self.date_ranges = date_ranges
+
         # Population in each tile for each era
-        self.population = {era: np.zeros([world.xdim, world.ydim]) for era in _eras}
+        self.population = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
 
         # Sum populations from cities and eras
         with open(data_file, 'r') as yamlfile:
             cities_data = yaml.load(yamlfile)
 
             for city in cities_data:
-                for era in _eras:
+                for era in date_ranges:
                     self.population[era][city['x'],city['y']] += city['population'][era]
 
     def plot_population_heatmap(self, blur=False):
-        for era in _eras:
+        for era in self.date_ranges:
             fig, ax, colour_map = _init_world_plot()
 
             plot_data = self.population[era]
