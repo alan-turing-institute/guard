@@ -3,6 +3,7 @@ from collections import namedtuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+from scipy import ndimage
 import yaml
 
 # How many communities a polity requires before it is considered large and is
@@ -175,12 +176,14 @@ class CitiesPopulation(object):
                 for era in _eras:
                     self.population[era][city['x'],city['y']] += city['population'][era]
 
-    def plot_population_heatmap(self):
+    def plot_population_heatmap(self, blur=False):
         for era in _eras:
             fig, ax, colour_map = _init_world_plot()
 
             plot_data = self.population[era]
 
+            if blur:
+                plot_data = ndimage.gaussian_filter(plot_data, sigma=blur)
             # Normalise
             vmax = np.max(plot_data)
             plot_data = plot_data/vmax
