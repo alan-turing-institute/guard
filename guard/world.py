@@ -41,6 +41,10 @@ class World(object):
     def _index(self, x, y):
         return x + y*self.xdim
 
+    # Return the current year
+    def year(self):
+        return self.step_number*2 - 1500
+
     # Determine maximum sea attack distance at current step
     def sea_attack_distance(self):
         return self.params.base_sea_attack_distance + \
@@ -207,9 +211,6 @@ class World(object):
 
     # Conduct a simulation step
     def step(self):
-        # Increment step counter
-        self.step_number += 1
-
         # Attacks
         self.attack()
 
@@ -218,3 +219,6 @@ class World(object):
 
         # Disintegration
         self.disintegration()
+
+        # Increment step counter
+        self.step_number += 1

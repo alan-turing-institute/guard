@@ -10,11 +10,6 @@ import yaml
 # recorded
 _LARGE_POLITY_THRESHOLD = 10
 
-# Steps at which to reset the imperial density map and store accumulated data
-# as an era (corresponding to 500BCE, 500CE and 1500CE)
-# Each step is 2 years and the simulation begins at 1500BCE
-_RESET_STEPS = [500,1000,1500]
-
 # Colours
 _SEA = np.array([0.25098039, 0.57647059, 0.92941176, 1.])
 _DESERT = np.array([0.7372549 , 0.71372549, 0.25098039, 1.])
@@ -79,14 +74,19 @@ cities_date_ranges = [DateRange(-2500,-1000),
         DateRange(1300,1400),
         DateRange(1400,1500)]
 
+# Default date ranges for imperial density eras
+imperial_density_date_ranges = [DateRange(-1500,-500),
+        DateRange(-500,500),
+        DateRange(500,1500)]
+
 # Contain and analyse imperial density information
 class ImperialDensity(object):
-    def __init__(self, world):
+    def __init__(self, world, date_ranges=imperial_density_date_ranges):
         self.world = world
+        self.date_ranges = date_ranges
 
-        self.imperial_density = np.zeros([world.xdim, world.ydim])
-        self.samples = 0
-        self.imperial_density_eras = []
+        self.imperial_density = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
+        self.samples = {era: 0 for era in date_ranges}
 
     def sample(self):
         # Create list of tiles to sample, only tiles with agriculture
@@ -94,37 +94,35 @@ class ImperialDensity(object):
         agricultural_tiles[:] = [tile for tile in agricultural_tiles \
                 if tile.is_active(self.world.step_number)]
 
+        # Create list of eras to add imperial density to, only those that
+        # contain the current year
+        year = self.world.year()
+        active_eras = [era for era in self.date_ranges if era.is_within(year)]
         for tile in agricultural_tiles:
             if tile.polity.size() > _LARGE_POLITY_THRESHOLD:
-                self.imperial_density[tile.position[0], tile.position[1]] += 1.
-
-        self.samples += 1
-
-        # Reset accumulated data and store if required
-        if self.world.step_number in _RESET_STEPS:
-            era = _RESET_STEPS.index(self.world.step_number)
-            self.imperial_density_eras.append(self.imperial_density/self.samples)
-            self.imperial_density = np.zeros([self.world.xdim, self.world.ydim])
-            self.samples = 0
+                for era in active_eras:
+                    self.imperial_density[era][tile.position[0], tile.position[1]] += 1.
+                    self.samples[era] += 1
 
     def export(self, normalise=False, highlight_desert=False, highlight_steppe=False):
-        for i,era in enumerate(self.imperial_density_eras):
+        for era in self.date_ranges:
             fig, ax, colour_map = _init_world_plot()
 
+            plot_data = self.imperial_density[era]
             # Express data as RGBA values
             if normalise:
-                era = era / np.max(era)
-            plot_data = colour_map(era)
-
+                plot_data = plot_data / np.max(plot_data)
+            plot_data = colour_map(plot_data)
             plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
 
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
             fig.colorbar(im)
-            fig.savefig('era_{:d}.pdf'.format(i+1), format='pdf')
+            fig.savefig('imperial_density_{}.pdf'.format(era), format='pdf')
 
     def dump(self, outfile):
         with open(outfile, 'wb') as picklefile:
-            pickle.dump(self.imperial_density_eras, picklefile)
+            pickle.dump({str(key): value for key,value in self.imperial_density.items()},
+                    picklefile)
 
 # Establish the figure, axis and colourmap for a standard map plot
 def _init_world_plot():
