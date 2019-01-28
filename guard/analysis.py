@@ -133,11 +133,10 @@ class ImperialDensity(object):
         with open(infile, 'rb') as picklefile:
             data = pickle.load(picklefile)
             for era, imperial_density in self.imperial_density.items():
-                era_string = str(era)
-                if era_string in data.keys():
-                    self.imperial_density[era] = data[era_string]
+                if era in data.keys():
+                    self.imperial_density[era] = data[era]
                 else:
-                    raise InvalidDateRange("Date range {} in file {} does not match any in ImperialDensity object".format(era_string, infile))
+                    raise InvalidDateRange("Date range {} in file {} does not match any in ImperialDensity object".format(era, infile))
 
 # Establish the figure, axis and colourmap for a standard map plot
 def _init_world_plot():
