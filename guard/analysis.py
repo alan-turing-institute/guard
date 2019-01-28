@@ -79,6 +79,9 @@ imperial_density_date_ranges = [DateRange(-1500,-500),
         DateRange(-500,500),
         DateRange(500,1500)]
 
+class InvalidDateRange(Exception):
+    pass
+
 # Contain and analyse imperial density information
 class ImperialDensity(object):
     def __init__(self, world, date_ranges=imperial_density_date_ranges):
@@ -123,6 +126,16 @@ class ImperialDensity(object):
         with open(outfile, 'wb') as picklefile:
             pickle.dump({str(key): value for key,value in self.imperial_density.items()},
                     picklefile)
+
+    def load(self, infile):
+        with open(infile, 'rb') as picklefile:
+            data = pickle.load(picklefile)
+            for era, imperial_density in self.imperial_density.items():
+                era_string = str(era)
+                if era_string in data.keys():
+                    self.imperial_density[era] = data[era_string]
+                else:
+                    raise InvalidDateRange("Date range {} in file {} does not match any in ImperialDensity object".format(era_string, infile))
 
 # Establish the figure, axis and colourmap for a standard map plot
 def _init_world_plot():
