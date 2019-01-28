@@ -115,6 +115,8 @@ class ImperialDensity(object):
             # Express data as RGBA values
             if normalise:
                 plot_data = plot_data / np.max(plot_data)
+            else:
+                plot_data = plot_data / self.samples[era]
             plot_data = colour_map(plot_data)
             plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
 
