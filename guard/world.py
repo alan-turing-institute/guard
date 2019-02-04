@@ -198,13 +198,14 @@ class World(object):
         self.polities += new_states
 
     # Attempt an attack from all communities
-    def attack(self):
+    def attack(self, callback=None):
         # Generate a random order for communities to attempt attacks in
         attack_order = permutation(self.total_tiles)
         for tile_no in attack_order:
             tile = self.tiles[tile_no]
             if tile.can_attack(self.step_number):
-                tile.attempt_attack(self.params, self.step_number, self.sea_attack_distance())
+                tile.attempt_attack(self.params, self.step_number,
+                        self.sea_attack_distance(), callback)
 
         self.prune_empty_polities()
 
@@ -213,9 +214,9 @@ class World(object):
         self.polities[:] = [state for state in self.polities if state.size() is not 0 ]
 
     # Conduct a simulation step
-    def step(self):
+    def step(self,attack_callback=None):
         # Attacks
-        self.attack()
+        self.attack(attack_callback)
 
         # Cultural shift
         self.cultural_shift()

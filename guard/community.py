@@ -120,7 +120,7 @@ class Community(object):
                 target.ultrasocietal_traits[:] = self.ultrasocietal_traits
 
     # Attempt to attack a random neighbour
-    def attempt_attack(self, params, step_number, sea_attack_distance):
+    def attempt_attack(self, params, step_number, sea_attack_distance, callback=None):
         direction = choice(DIRECTIONS)
         target = self.neighbours[direction]
 
@@ -155,6 +155,8 @@ class Community(object):
         # Conduct an attack if there is no reason not to
         if proceed:
             self.attack(target, params, sea_attack=sea_attack)
+            if callback:
+                callback(target)
 
         # Attempt to diffuse military technology regardless of whether the attack
         # proceeded or was successful

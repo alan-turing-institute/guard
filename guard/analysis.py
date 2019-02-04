@@ -322,3 +322,30 @@ class CitiesPopulation(object):
             fig.tight_layout()
             fig.savefig('ipd_pop_{}.pdf'.format(era), format='pdf')
             ax.cla()
+
+# Enumerate and analyse attack frequency in each tile
+class AttackEvents(object):
+    def __init__(self, world, date_ranges):
+        self.world = world
+        self.date_ranges = date_ranges
+
+        #self.attacks = {}.fromkeys(date_ranges, np.zeros([world.xdim, world.ydim]))
+        self.attacks = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
+
+    def sample(self, tile):
+        year = self.world.year()
+        active_eras = [era for era in self.date_ranges if era.is_within(year)]
+        for era in active_eras:
+            self.attacks[era][tile.position[0], tile.position[1]] += 1.
+
+    def plot(self, highlight_desert=False, highlight_steppe=False):
+        for era in self.date_ranges:
+            fig, ax, colour_map = _init_world_plot()
+            plot_data = self.attacks[era]
+
+            plot_data = plot_data / np.max(plot_data)
+            plot_data = colour_map(plot_data)
+            plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
+            im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
+            fig.colorbar(im)
+            fig.savefig('attack_frequency_{}.pdf'.format(era), format='pdf')
