@@ -1,4 +1,4 @@
+matplotlib
 numpy
 pyyaml
-matplotlib
 scipy
