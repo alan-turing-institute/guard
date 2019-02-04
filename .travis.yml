@@ -1,10 +1,22 @@
 language: python
 
-dist: xenial
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      python: 3.6
+    - os: linux
+      dist: xenial
+      python: 3.7
+    - os: osx
+      language: generic
+      env: PYTHON_VERSION=3.6
+    - os: osx
+      language: generic
+      env: PYTHON_VERSION=3.7
 
-python:
-  - 3.6
-  - 3.7
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./.travis/osx_install.sh; fi
 
 script:
   pytest -v
