@@ -4,6 +4,9 @@ from numpy import sqrt
 from numpy.random import random, permutation
 import yaml
 
+_START_YEAR = -1500
+_YEARS_PER_STEP = 2
+
 # Container for all communities(tiles) and methods relating to them
 class World(object):
     def __init__(self, xdim=0, ydim=0, params=defaults, from_file=None):
@@ -40,6 +43,10 @@ class World(object):
     # Returns the position in the tiles list of the tile at coordinates (x,y)
     def _index(self, x, y):
         return x + y*self.xdim
+
+    # Return the current year
+    def year(self):
+        return self.step_number*_YEARS_PER_STEP + _START_YEAR
 
     # Determine maximum sea attack distance at current step
     def sea_attack_distance(self):
@@ -207,9 +214,6 @@ class World(object):
 
     # Conduct a simulation step
     def step(self):
-        # Increment step counter
-        self.step_number += 1
-
         # Attacks
         self.attack()
 
@@ -218,3 +222,6 @@ class World(object):
 
         # Disintegration
         self.disintegration()
+
+        # Increment step counter
+        self.step_number += 1

@@ -13,6 +13,7 @@ params = defaults
 
 n_sim = 20
 imperial_density = []
+date_ranges = analysis.imperial_density_date_ranges
 
 for sim in range(n_sim):
     map_ = world.World(params=params, from_file=project_dir+'/data/old_world.yml')
@@ -21,12 +22,13 @@ for sim in range(n_sim):
         map_.step()
         imperial_density[sim].sample()
         if (map_.step_number)%100 == 0:
-            print('simulation: {:2d}\tstep: {:4d}'.format(sim+1,step+1))
+            print('simulation: {:2d}\tstep: {:4d}'.format(sim+1,map_.step_number))
 
 # Average imperial density for all simulations
 mean_impd = analysis.ImperialDensity(map_)
-for era in range(3):
-    mean_impd.imperial_density_eras.append(sum([run.imperial_density_eras[era] for run in imperial_density]))
-    mean_impd.imperial_density_eras[era] = mean_impd.imperial_density_eras[era] / n_sim
+for era in date_ranges:
+    mean_impd.imperial_density[era] = sum([run.imperial_density[era] for run in imperial_density])
+    mean_impd.imperial_density[era] = mean_impd.imperial_density[era] / n_sim
 
 mean_impd.export(normalise=True,highlight_steppe=False)
+mean_impd.dump('./imperial_density.pkl')

@@ -7,7 +7,6 @@ sys.path.insert(0, project_dir)
 
 from guard import world, analysis
 from guard.parameters import defaults
-from guard.community import DIRECTIONS
 
 params = defaults
 
@@ -18,10 +17,11 @@ for step in range(1500):
     map_.step()
     imperial_density.sample()
     if (map_.step_number)%100 == 0:
-        print('step: {:4d}'.format(step+1))
+        print('step: {:4d}\tyear: {:d}'.format(map_.step_number, map_.year()))
 
-    if (map_.step_number)%250 == 0:
-        analysis.plot_military_techs(map_)
-        analysis.plot_ultrasocietal_traits(map_)
+    #if (map_.step_number)%250 == 0:
+    #    analysis.plot_military_techs(map_)
+    #    analysis.plot_ultrasocietal_traits(map_)
 
 imperial_density.export(normalise=True,highlight_steppe=True)
+imperial_density.dump('./imperial_density.pkl')
