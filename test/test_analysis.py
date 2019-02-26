@@ -46,6 +46,12 @@ class TestDateRange(object):
 
         assert test_dict['0-500AD'] == 'test'
 
+    def test_from_string(self):
+        date_range_1 = analysis.DateRange(-500,200)
+        date_range_2 = analysis.DateRange.from_string('500BC-200AD')
+
+        assert date_range_1 == date_range_2
+
 def test_population_data(generate_world):
     map_ = world.World(from_file=context.project_dir+'/test/data/test_map_5x5.yml')
     cities = analysis.CitiesPopulation(map_, context.project_dir+'/test/data/test_cities.yml')

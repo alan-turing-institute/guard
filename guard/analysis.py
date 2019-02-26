@@ -23,6 +23,21 @@ class DateRange(object):
         self.end_year = end_year
         self.label = self._create_label()
 
+    @staticmethod
+    def from_string(string):
+        # Get dates in AD/BC format from string
+        dates = string.split('-')
+
+        # Change into integer representation
+        for i,date in enumerate(dates):
+            if date[-2:] == 'BC':
+                dates[i] = int(date[:-2])*-1
+            else:
+                dates[i] = int(date[:-2])
+
+        print(*dates)
+        return DateRange(*dates)
+
     def _create_label(self):
         if self.start_year < 0:
             label = '{:d}BC-'.format(abs(self.start_year))
