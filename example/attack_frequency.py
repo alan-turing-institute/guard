@@ -19,12 +19,21 @@ date_ranges = [
         analysis.DateRange(1300,1400),
         analysis.DateRange(1400,1500)]
 
-map_ = world.World(params=params, from_file=project_dir+'/data/old_world.yml')
-attack_frequency = analysis.AttackEvents(map_, date_ranges=date_ranges)
+n_sim = 20
+attack_frequency = []
 
-for step in range(1500):
-    map_.step(attack_frequency.sample)
-    if (map_.step_number)%100 == 0:
-        print('step: {:4d}\tyear: {:d}'.format(map_.step_number, map_.year()))
+for run in range(n_sim):
+    map_ = world.World(params=params, from_file=project_dir+'/data/old_world.yml')
+    attack_frequency.append(analysis.AttackEvents(map_, date_ranges=date_ranges))
 
-attack_frequency.plot()
+    for step in range(1500):
+        map_.step(attack_frequency[run].sample)
+        if (map_.step_number)%100 == 0:
+            print('simulation: {:d}\tstep: {:4d}\tyear: {:d}'.format(run, map_.step_number, map_.year()))
+
+mean_attack_frequency = analysis.AttackEvents(map_, date_ranges=date_ranges)
+for era in date_ranges:
+    mean_attack_frequency.attacks[era] = sum([run.attacks[era] for run in attack_frequency])
+    mean_attack_frequency.attacks[era] = mean_attack_frequency.attacks[era] / n_sim
+
+mean_attack_frequency.plot()
