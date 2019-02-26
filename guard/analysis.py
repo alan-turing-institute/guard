@@ -146,7 +146,7 @@ class ImperialDensity(object):
     def load(self, infile):
         with open(infile, 'rb') as picklefile:
             data = pickle.load(picklefile)
-            for era, imperial_density in self.imperial_density.items():
+            for era in self.imperial_density.items():
                 if era in data.keys():
                     self.imperial_density[era] = data[era]
                 else:
