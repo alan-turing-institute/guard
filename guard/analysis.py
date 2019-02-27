@@ -30,12 +30,13 @@ class DateRange(object):
 
         # Change into integer representation
         for i,date in enumerate(dates):
-            if date[-2:] == 'BC':
+            if date == '0':
+                dates[i] = 0
+            elif date[-2:] == 'BC':
                 dates[i] = int(date[:-2])*-1
             else:
                 dates[i] = int(date[:-2])
 
-        print(*dates)
         return DateRange(*dates)
 
     def _create_label(self):
