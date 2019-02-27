@@ -36,4 +36,10 @@ for era in date_ranges:
     mean_attack_frequency.attacks[era] = sum([run.attacks[era] for run in attack_frequency])
     mean_attack_frequency.attacks[era] = mean_attack_frequency.attacks[era] / n_sim
 
+mean_attack_frequency.dump('attack_frequency.pkl')
+
+#mean_attack_frequency = analysis.AttackEvents(
+#    world.World(params=params, from_file=project_dir+'/data/old_world.yml'),
+#    from_file='./attack_frequency.pkl')
+
 mean_attack_frequency.plot()
