@@ -341,12 +341,14 @@ class CitiesPopulation(object):
 
 # Enumerate and analyse attack frequency in each tile
 class AttackEvents(object):
-    def __init__(self, world, date_ranges):
+    def __init__(self, world, date_ranges=None, from_file=None):
         self.world = world
-        self.date_ranges = date_ranges
 
-        #self.attacks = {}.fromkeys(date_ranges, np.zeros([world.xdim, world.ydim]))
-        self.attacks = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
+        if from_file:
+            self._load(from_file)
+        else:
+            self.date_ranges = date_ranges
+            self.attacks = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
 
     def sample(self, tile):
         year = self.world.year()
@@ -365,3 +367,19 @@ class AttackEvents(object):
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
             fig.colorbar(im)
             fig.savefig('attack_frequency_{}.pdf'.format(era), format='pdf')
+
+    def dump(self, outfile):
+        with open(outfile, 'wb') as picklefile:
+            pickle.dump({str(key): value for key,value in self.attacks.items()},
+                    picklefile)
+
+    def _load(self, infile):
+        self.date_ranges = []
+        self.attacks = {}
+
+        with open(infile, 'rb') as picklefile:
+            data = pickle.load(picklefile)
+            for key, value in data.items():
+                daterange = DateRange.from_string(key)
+                self.date_ranges.append(daterange)
+                self.attacks[daterange] = value
