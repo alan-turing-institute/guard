@@ -339,52 +339,63 @@ class CitiesPopulation(object):
             fig.savefig('ipd_pop_{}.pdf'.format(era), format='pdf')
             ax.cla()
 
-# Enumerate and analyse attack frequency in each tile
-class AttackEvents(object):
-    def __init__(self, world, date_ranges=None, from_file=None):
+# Base class for accumulators of tile wise data
+class AccumulatorBase(object):
+    _prefix = None
+
+    def __init__(self, world, date_ranges=None):
         self.world = world
+        self.date_ranges = date_ranges
+        self.data = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
 
-        if from_file:
-            self._load(from_file)
-        else:
-            self.date_ranges = date_ranges
-            self.attacks = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
+    @classmethod
+    def from_file(cls, world, data_file):
+        date_ranges = []
+        data = {}
+        with open(data_file, 'rb') as picklefile:
+            data_dict = pickle.load(picklefile)
+            for era, value in data_dict.items():
+                daterange = DateRange.from_string(era)
+                date_ranges.append(daterange)
+                data[daterange] = value
 
-        self.data = self.attacks
+            accumulator = cls(world, date_ranges)
+            accumulator.data = data
+        return accumulator
 
-    def sample(self, tile):
-        year = self.world.year()
-        active_eras = [era for era in self.date_ranges if era.is_within(year)]
-        for era in active_eras:
-            self.attacks[era][tile.position[0], tile.position[1]] += 1.
+    def sample(self):
+        pass
 
     def plot(self, highlight_desert=False, highlight_steppe=False):
         for era in self.date_ranges:
             fig, ax, colour_map = _init_world_plot()
-            plot_data = self.attacks[era]
+            plot_data = self.data[era]
 
             plot_data = plot_data / np.max(plot_data)
             plot_data = colour_map(plot_data)
             plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
             fig.colorbar(im)
-            fig.savefig('attack_frequency_{}.pdf'.format(era), format='pdf')
+            fig.savefig('{}_{}.pdf'.format(self._prefix,era), format='pdf')
 
     def dump(self, outfile):
         with open(outfile, 'wb') as picklefile:
-            pickle.dump({str(key): value for key,value in self.attacks.items()},
-                    picklefile)
+            pickle.dump(
+                {str(key): value for key,value in self.data.items()},
+                picklefile)
 
-    def _load(self, infile):
-        self.date_ranges = []
-        self.attacks = {}
+# Enumerate and analyse attack frequency in each tile
+class AttackEvents(AccumulatorBase):
+    _prefix = 'attack_frequency'
 
-        with open(infile, 'rb') as picklefile:
-            data = pickle.load(picklefile)
-            for key, value in data.items():
-                daterange = DateRange.from_string(key)
-                self.date_ranges.append(daterange)
-                self.attacks[daterange] = value
+    def __init__(self, world, date_ranges=None):
+        super().__init__(world, date_ranges)
+
+    def sample(self, tile):
+        year = self.world.year()
+        active_eras = [era for era in self.date_ranges if era.is_within(year)]
+        for era in active_eras:
+            self.attacks[era][tile.position[0], tile.position[1]] += 1.
 
 # Base class for correlated data projected onto the map with tilewise properties
 class CorrelateBase(object):
