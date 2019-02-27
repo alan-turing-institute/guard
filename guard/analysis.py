@@ -350,6 +350,8 @@ class AttackEvents(object):
             self.date_ranges = date_ranges
             self.attacks = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
 
+        self.data = self.attacks
+
     def sample(self, tile):
         year = self.world.year()
         active_eras = [era for era in self.date_ranges if era.is_within(year)]
@@ -383,3 +385,107 @@ class AttackEvents(object):
                 daterange = DateRange.from_string(key)
                 self.date_ranges.append(daterange)
                 self.attacks[daterange] = value
+
+# Base class for correlated data projected onto the map with tilewise properties
+class CorrelateBase(object):
+    _prefix = None
+    _REMOVE_FLAG = -5
+
+    def __init__(self, world, date_ranges):
+        self.world = world
+        self.date_ranges = date_ranges
+        self.data = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
+
+    def plot_heatmap(self, blur=False):
+        for era in self.date_ranges:
+            fig, ax, colour_map = _init_world_plot()
+
+            plot_data = self.data[era]
+
+            if blur:
+                plot_data = ndimage.gaussian_filter(plot_data, sigma=blur)
+            # Normalise
+            vmax = np.max(plot_data)
+            plot_data = plot_data/vmax
+
+            # Create rgb data
+            plot_data = colour_map(plot_data)
+            plot_data = _colour_special_tiles(plot_data, self.world)
+
+
+            im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmax=vmax, vmin=0)
+            fig.colorbar(im)
+            fig.savefig('{}_{}.pdf'.format(self._prefix,era))
+
+    def correlate(self, accumulator, blur=False, cumulative=False):
+        assert self.world is accumulator.world
+        common_eras = [era for era in self.date_ranges if era in accumulator.date_ranges]
+
+        if cumulative:
+            cumulative = np.zeros([self.world.xdim, self.world.ydim])
+
+        # Figure and axes
+        fig, ax = plt.subplots()
+        # Correlate population and imperial density between eras in both
+        # cities data and imperial denisty
+        for era in common_eras:
+            # Axes setup
+            ax.set_xlabel=('Imperial Density')
+            ax.set_ylabel=('Population')
+            ax.set_title(str(era))
+
+            comparison = accumulator.data[era]
+            if cumulative:
+                comparison += cumulative
+                cumulative = comparison
+            data = self.data[era]
+
+            if blur:
+                data = ndimage.gaussian_filter(data, sigma=blur)
+
+            # Don't compare sea tiles
+            for tile in self.world.tiles:
+                if tile.terrain == terrain.sea:
+                    x, y = tile.position[0], tile.position[1]
+                    comparison[x,y] = self._REMOVE_FLAG
+                    data[x,y] = self._REMOVE_FLAG
+
+            comparison = comparison.flatten()
+            data = data.flatten()
+
+            if blur == False:
+                # Only compare tiles with data
+                for index in range(len(comparison)):
+                    if data[index] == 0:
+                        comparison[index] = self._REMOVE_FLAG
+                        data[index] = self._REMOVE_FLAG
+
+            # Remove flagged elements
+            comparison = np.array([elem for elem in comparison if elem != self._REMOVE_FLAG])
+            data = np.array([elem for elem in data if elem != self._REMOVE_FLAG])
+
+            linreg = stats.linregress(comparison,data)
+
+            ax.plot(comparison, data, 'x')
+            ax.plot(comparison, comparison*linreg.slope + linreg.intercept)
+            ax.text(0, 1, str(linreg.rvalue), transform=ax.transAxes)
+
+            fig.tight_layout()
+            fig.savefig('{}_correlation_{}.pdf'.format(self._prefix,era), format='pdf')
+            ax.cla()
+
+# Battles corralatable class
+class Battles(CorrelateBase):
+    _prefix = 'battles'
+    def __init__(self, world, date_range, data_file):
+        super().__init__(world, date_range)
+
+        # Sum battles from data file
+        with open(data_file, 'r') as yamlfile:
+            battles = yaml.load(yamlfile)
+
+            for battle in battles:
+                for era in self.date_ranges:
+                    if era.is_within(battle['year']):
+                        self.data[era][battle['x'], battle['y']] += 1.
+

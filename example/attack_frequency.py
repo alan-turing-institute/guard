@@ -38,8 +38,14 @@ for era in date_ranges:
 
 mean_attack_frequency.dump('attack_frequency.pkl')
 
+
+#map_ = world.World(params=params, from_file=project_dir+'/data/old_world.yml')
 #mean_attack_frequency = analysis.AttackEvents(
-#    world.World(params=params, from_file=project_dir+'/data/old_world.yml'),
+#    map_,
 #    from_file='./attack_frequency.pkl')
 
 mean_attack_frequency.plot()
+
+battles = analysis.Battles(map_, date_ranges, project_dir+'/data/battles.yml')
+battles.plot_heatmap()
+battles.correlate(mean_attack_frequency)
