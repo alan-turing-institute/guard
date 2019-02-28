@@ -379,7 +379,7 @@ class CitiesPopulation(CorrelateBase):
     _label = 'population'
     _prefix = 'population'
 
-    def __init__(self, world, date_ranges, data_file):
+    def __init__(self, world, data_file, date_ranges=cities_date_ranges):
         super().__init__(world, date_ranges)
 
         # Sum populations from cities and eras

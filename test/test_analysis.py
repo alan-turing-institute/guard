@@ -56,6 +56,6 @@ def test_population_data(generate_world):
     map_ = world.World(from_file=context.project_dir+'/test/data/test_map_5x5.yml')
     cities = analysis.CitiesPopulation(map_, context.project_dir+'/test/data/test_cities.yml')
 
-    assert cities.population['0-500AD'][0,0] == 42000
-    assert cities.population['1000BC-0'][0,0] == 42000
-    assert cities.population['1400AD-1500AD'][2,4] == 400000
+    assert cities.data['0-500AD'][0,0] == 42000
+    assert cities.data['1000BC-0'][0,0] == 42000
+    assert cities.data['1400AD-1500AD'][2,4] == 400000
