@@ -7,6 +7,7 @@ import yaml
 _START_YEAR = -1500
 _YEARS_PER_STEP = 2
 
+
 # Container for all communities(tiles) and methods relating to them
 class World(object):
     def __init__(self, xdim=0, ydim=0, params=defaults, from_file=None):
@@ -25,7 +26,8 @@ class World(object):
         string = 'World:\n'
         string += '\t- Tiles: {0}\n'.format(self.total_tiles)
         string += '\t- Dimensions: {0}x{1}\n'.format(self.xdim, self.ydim)
-        string += '\t- Number of polities: {0}'.format(self.number_of_polities())
+        string += '\t- Number of polities: {0}'.format(
+            self.number_of_polities())
 
         return string
 
@@ -38,7 +40,7 @@ class World(object):
     def index(self, x, y):
         if any([x < 0, x >= self.xdim, y < 0, y >= self.ydim]):
             return None
-        return self.tiles[self._index(x,y)]
+        return self.tiles[self._index(x, y)]
 
     # Returns the position in the tiles list of the tile at coordinates (x,y)
     def _index(self, x, y):
@@ -57,12 +59,12 @@ class World(object):
     def set_neighbours(self):
         for x in range(self.xdim):
             for y in range(self.ydim):
-                tile = self.index(x,y)
-                tile.position = (x,y)
-                tile.neighbours['left'] = self.index(x-1,y)
-                tile.neighbours['right'] = self.index(x+1,y)
-                tile.neighbours['up'] = self.index(x,y+1)
-                tile.neighbours['down'] = self.index(x,y-1)
+                tile = self.index(x, y)
+                tile.position = (x, y)
+                tile.neighbours['left'] = self.index(x-1, y)
+                tile.neighbours['right'] = self.index(x+1, y)
+                tile.neighbours['up'] = self.index(x, y+1)
+                tile.neighbours['down'] = self.index(x, y-1)
 
     # Determine which tiles are littoral
     def set_littoral_tiles(self):
@@ -74,37 +76,42 @@ class World(object):
             for direction in community.DIRECTIONS:
                 neighbour = tile.neighbours[direction]
                 # Ensure there is a neighour
-                if neighbour == None:
+                if neighbour is None:
                     continue
                 # Check if neighbour is a sea tile
                 if neighbour.terrain is terrain.sea:
                     tile.littoral = True
-                    # Break here as only one neighbour needs to be sea for tile to
-                    # be littoral
+                    # Break here as only one neighbour needs to be sea for tile
+                    # to be littoral
                     break
 
-    # Determine a list of all littoral neighbours and distance for all littoral tiles
+    # Determine a list of all littoral neighbours and distance for all littoral
+    # tiles
     def set_littoral_neighbours(self):
-        littoral_tiles = [tile for tile in self.tiles if tile.littoral == True]
+        littoral_tiles = [tile for tile in self.tiles if tile.littoral is True]
         n_littoral = len(littoral_tiles)
 
         for tile in littoral_tiles:
-            # Add self as a littoral neighbour with 0 distance, this is important
-            # in order to reproduce Turchin's results
-            tile.littoral_neighbours.append(community.LittoralNeighbour(tile,0))
+            # Add self as a littoral neighbour with 0 distance, this is
+            # important in order to reproduce Turchin's results
+            tile.littoral_neighbours.append(
+                community.LittoralNeighbour(tile, 0))
 
         for i in range(n_littoral-1):
             itile = littoral_tiles[i]
             for j in range(i+1, n_littoral):
                 jtile = littoral_tiles[j]
 
-                # Calculate euclidean distance between tiles in tile dimension units
-                distance = sqrt( (itile.position[0]-jtile.position[0])**2 + \
-                        (itile.position[1]-jtile.position[1])**2 )
+                # Calculate euclidean distance between tiles in tile dimension
+                # units
+                distance = sqrt((itile.position[0]-jtile.position[0])**2 +
+                                (itile.position[1]-jtile.position[1])**2)
 
                 # Add neighbour and the symmetric entry
-                itile.littoral_neighbours.append(community.LittoralNeighbour(jtile,distance))
-                jtile.littoral_neighbours.append(community.LittoralNeighbour(itile,distance))
+                itile.littoral_neighbours.append(
+                    community.LittoralNeighbour(jtile, distance))
+                jtile.littoral_neighbours.append(
+                    community.LittoralNeighbour(itile, distance))
 
     # Read a world from a YAML file
     def read_from_yaml(self, yaml_file):
@@ -131,7 +138,8 @@ class World(object):
         for tile in tile_data:
             x, y = tile['x'], tile['y']
 
-            assert tile['terrain'] in ['agriculture','steppe','desert','sea']
+            assert tile['terrain'] in ['agriculture', 'steppe',
+                                       'desert', 'sea']
             if tile['terrain'] == 'agriculture':
                 landscape = terrain.agriculture
             elif tile['terrain'] == 'steppe':
@@ -152,10 +160,11 @@ class World(object):
                 elif agricultural_period == 'agri3':
                     active_from = period.agri3
 
-                self.tiles[self._index(x,y)] = community.Community(self.params, landscape,
-                        elevation, active_from)
+                self.tiles[self._index(x, y)] = community.Community(
+                    self.params, landscape, elevation, active_from)
             else:
-                self.tiles[self._index(x,y)] = community.Community(self.params, landscape)
+                self.tiles[self._index(x, y)] = community.Community(
+                    self.params, landscape)
 
         # Initialise neighbours and littoral neighbours
         self.set_neighbours()
@@ -163,13 +172,17 @@ class World(object):
         self.set_littoral_neighbours()
 
         # Each agricultural tile is its own polity
-        self.polities = [polity.Polity([tile]) for tile in self.tiles if tile.terrain.polity_forming]
+        self.polities = [polity.Polity([tile])
+                         for tile in self.tiles if tile.terrain.polity_forming]
 
     # Populate the world with agriculture communities at zero elevation
     def create_flat_agricultural_world(self, steppes=[]):
-        self.tiles = [community.Community(self.params) for i in range(self.total_tiles)]
+        self.tiles = [community.Community(self.params)
+                      for i in range(self.total_tiles)]
         for coordinate in steppes:
-            self.tiles[self._index(coordinate[0], coordinate[1])] = community.Community(self.params, terrain.steppe)
+            self.tiles[
+                self._index(coordinate[0], coordinate[1])
+                ] = community.Community(self.params, terrain.steppe)
         self.set_neighbours()
         # Each tile is its own polity
         self.polities = [polity.Polity([tile]) for tile in self.tiles]
@@ -205,16 +218,17 @@ class World(object):
             tile = self.tiles[tile_no]
             if tile.can_attack(self.step_number):
                 tile.attempt_attack(self.params, self.step_number,
-                        self.sea_attack_distance(), callback)
+                                    self.sea_attack_distance(), callback)
 
         self.prune_empty_polities()
 
     # Prune polities with zero communities
     def prune_empty_polities(self):
-        self.polities[:] = [state for state in self.polities if state.size() is not 0 ]
+        self.polities[:] = [state for state in self.polities
+                            if state.size() != 0]
 
     # Conduct a simulation step
-    def step(self,attack_callback=None):
+    def step(self, attack_callback=None):
         # Attacks
         self.attack(attack_callback)
 

@@ -5,6 +5,7 @@ class Period(object):
     def is_active(self, step_number):
         return step_number >= self.active_from
 
+
 # Agricultural from 1500BCE (the beginning)
 agri1 = Period(0)
 # Agricultural from 300CE

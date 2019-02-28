@@ -7,6 +7,7 @@ class Terrain(object):
     def __str__(self):
         return self.name
 
+
 agriculture = Terrain('agriculture', True)
 steppe = Terrain('steppe', True)
 sea = Terrain('sea', False)
