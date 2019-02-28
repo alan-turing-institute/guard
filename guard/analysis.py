@@ -407,6 +407,7 @@ class CorrelateBase(object):
         self.date_ranges = date_ranges
         self.data = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
 
+    # Draw a heatmap of the data projected onto the map
     def plot_heatmap(self, blur=False):
         for era in self.date_ranges:
             fig, ax, colour_map = _init_world_plot()
@@ -428,6 +429,8 @@ class CorrelateBase(object):
             fig.colorbar(im)
             fig.savefig('{}_{}.pdf'.format(self._prefix,era))
 
+    # Perform a linear regression of the accumaltors date against the
+    # correlators data and plot the result
     def correlate(self, accumulator, blur=False, cumulative=False):
         assert self.world is accumulator.world
         common_eras = [era for era in self.date_ranges if era in accumulator.date_ranges]
@@ -475,8 +478,10 @@ class CorrelateBase(object):
             comparison = np.array([elem for elem in comparison if elem != self._REMOVE_FLAG])
             data = np.array([elem for elem in data if elem != self._REMOVE_FLAG])
 
+            # Linear regression
             linreg = stats.linregress(comparison,data)
 
+            # Scatter plot of data against comparison with best fit line
             ax.plot(comparison, data, 'x')
             ax.plot(comparison, comparison*linreg.slope + linreg.intercept)
             ax.text(0, 1, str(linreg.rvalue), transform=ax.transAxes)
