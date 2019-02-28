@@ -371,7 +371,7 @@ class CorrelateBase(object):
             ax.text(0, 1, str(linreg.rvalue), transform=ax.transAxes)
 
             fig.tight_layout()
-            fig.savefig('{}_correlation_{}.pdf'.format(self._prefix,era), format='pdf')
+            fig.savefig('{}_{}_correlation_{}.pdf'.format(self._prefix,accumulator._prefix,era), format='pdf')
             ax.cla()
 
 # Population corralatable class
