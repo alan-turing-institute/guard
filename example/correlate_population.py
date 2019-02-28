@@ -32,8 +32,8 @@ for step in range(1500):
 imperial_density.plot_all(highlight_steppe=False)
 imperial_density.dump('./imperial_density.pkl')
 
-#imperial_density = ImperialDensity.from_file(map_,'./imperial_density.pkl')
+#imperial_density = analysis.ImperialDensity.from_file(map_,'./imperial_density.pkl')
 
 blur = 3.0
-population.plot_population_heatmap(blur=blur)
+population.plot_heatmap(blur=blur)
 population.correlate(imperial_density, blur=blur, cumulative=True)

@@ -183,107 +183,6 @@ def plot_active_agriculture(world, highlight_desert=False, highlight_steppe=Fals
         fig.colorbar(im)
         fig.savefig('active_{:04d}.pdf'.format(world.step_number), format='pdf')
 
-# Analyse population data of cities
-class CitiesPopulation(object):
-    # Flag for pruning values before regression
-    _REMOVE_FLAG = -5
-
-    def __init__(self, world, data_file, date_ranges=cities_date_ranges):
-        self.world = world
-        self.date_ranges = date_ranges
-
-        # Population in each tile for each era
-        self.population = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
-
-        # Sum populations from cities and eras
-        with open(data_file, 'r') as yamlfile:
-            cities_data = yaml.load(yamlfile)
-
-            for city in cities_data:
-                for era in date_ranges:
-                    try:
-                        self.population[era][city['x'],city['y']] += city['population'][era]
-                    except KeyError:
-                        raise InvalidDateRange("Date range {} not in city data\n\t{}".format(era,city))
-
-    def plot_population_heatmap(self, blur=False):
-        for era in self.date_ranges:
-            fig, ax, colour_map = _init_world_plot()
-
-            plot_data = self.population[era]
-
-            if blur:
-                plot_data = ndimage.gaussian_filter(plot_data, sigma=blur)
-            # Normalise
-            vmax = np.max(plot_data)
-            plot_data = plot_data/vmax
-
-            # Create rgb data
-            plot_data = colour_map(plot_data)
-            plot_data = _colour_special_tiles(plot_data, self.world)
-
-
-            im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmax=vmax, vmin=0)
-            fig.colorbar(im)
-            fig.savefig('population_{}.pdf'.format(era))
-
-    def correlate(self, imperial_density, blur=False, cumulative=False):
-        assert self.world is imperial_density.world
-        common_eras = [era for era in self.date_ranges if era in imperial_density.date_ranges]
-
-        if cumulative:
-            cumulative_impd = np.zeros([self.world.xdim, self.world.ydim])
-
-        # Figure and axes
-        fig, ax = plt.subplots()
-        # Correlate population and imperial density between eras in both
-        # cities data and imperial denisty
-        for era in common_eras:
-            # Axes setup
-            ax.set_xlabel=('Imperial Density')
-            ax.set_ylabel=('Population')
-            ax.set_title(str(era))
-
-            impd = imperial_density.imperial_density[era]
-            if cumulative:
-                impd += cumulative_impd
-                cumulative_impd = impd
-            pop = self.population[era]
-
-            if blur:
-                pop = ndimage.gaussian_filter(pop, sigma=blur)
-
-            # Don't compare sea tiles
-            for tile in self.world.tiles:
-                if tile.terrain == terrain.sea:
-                    x, y = tile.position[0], tile.position[1]
-                    impd[x,y] = self._REMOVE_FLAG
-                    pop[x,y] = self._REMOVE_FLAG
-
-            impd = impd.flatten()
-            pop = pop.flatten()
-
-            if blur == False:
-                # Only compare tiles with population data
-                for index in range(len(impd)):
-                    if pop[index] == 0:
-                        impd[index] = self._REMOVE_FLAG
-                        pop[index] = self._REMOVE_FLAG
-
-            # Remove flagged elements
-            impd = np.array([elem for elem in impd if elem != self._REMOVE_FLAG])
-            pop = np.array([elem for elem in pop if elem != self._REMOVE_FLAG])
-
-            linreg = stats.linregress(impd,pop)
-
-            ax.plot(impd, pop, 'x')
-            ax.plot(impd, impd*linreg.slope + linreg.intercept)
-            ax.text(0, 1, str(linreg.rvalue), transform=ax.transAxes)
-
-            fig.tight_layout()
-            fig.savefig('ipd_pop_{}.pdf'.format(era), format='pdf')
-            ax.cla()
-
 # Base class for accumulators of tile wise data
 class AccumulatorBase(object):
     _prefix = None
@@ -418,7 +317,7 @@ class CorrelateBase(object):
         common_eras = [era for era in self.date_ranges if era in accumulator.date_ranges]
 
         if cumulative:
-            cumulative = np.zeros([self.world.xdim, self.world.ydim])
+            cumulative_sum = np.zeros([self.world.xdim, self.world.ydim])
 
         # Figure and axes
         fig, ax = plt.subplots()
@@ -432,8 +331,8 @@ class CorrelateBase(object):
 
             comparison = accumulator.data[era]
             if cumulative:
-                comparison += cumulative
-                cumulative = comparison
+                comparison += cumulative_sum
+                cumulative_sum = comparison
             data = self.data[era]
 
             if blur:
@@ -472,11 +371,30 @@ class CorrelateBase(object):
             fig.savefig('{}_correlation_{}.pdf'.format(self._prefix,era), format='pdf')
             ax.cla()
 
+# Population corralatable class
+class CitiesPopulation(CorrelateBase):
+    _prefix = 'population'
+
+    def __init__(self, world, date_ranges, data_file):
+        super().__init__(world, date_ranges)
+
+        # Sum populations from cities and eras
+        with open(data_file, 'r') as yamlfile:
+            cities_data = yaml.load(yamlfile)
+
+            for city in cities_data:
+                for era in date_ranges:
+                    try:
+                        self.data[era][city['x'],city['y']] += city['population'][era]
+                    except KeyError:
+                        raise InvalidDateRange("Date range {} not in city data\n\t{}".format(era,city))
+
 # Battles corralatable class
 class Battles(CorrelateBase):
     _prefix = 'battles'
-    def __init__(self, world, date_range, data_file):
-        super().__init__(world, date_range)
+
+    def __init__(self, world, date_ranges, data_file):
+        super().__init__(world, date_ranges)
 
         # Sum battles from data file
         with open(data_file, 'r') as yamlfile:
@@ -486,4 +404,3 @@ class Battles(CorrelateBase):
                 for era in self.date_ranges:
                     if era.is_within(battle['year']):
                         self.data[era][battle['x'], battle['y']] += 1.
-
