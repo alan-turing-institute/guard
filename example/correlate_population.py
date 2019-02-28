@@ -29,10 +29,10 @@ for step in range(1500):
     if (map_.step_number)%100 == 0:
         print('step: {:4d}\tyear: {:d}'.format(map_.step_number, map_.year()))
 
-imperial_density.export(normalise=True,highlight_steppe=False)
+imperial_density.plot_all(highlight_steppe=False)
 imperial_density.dump('./imperial_density.pkl')
 
-#imperial_density.load('./imperial_density.pkl')
+#imperial_density = ImperialDensity.from_file(map_,'./imperial_density.pkl')
 
 blur = 3.0
 population.plot_population_heatmap(blur=blur)

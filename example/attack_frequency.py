@@ -43,7 +43,7 @@ mean_attack_frequency = analysis.AttackEvents.from_file(
     map_,
     './attack_frequency.pkl')
 
-mean_attack_frequency.plot()
+mean_attack_frequency.plot_all()
 
 battles = analysis.Battles(map_, date_ranges, project_dir+'/data/battles.yml')
 battles.plot_heatmap()

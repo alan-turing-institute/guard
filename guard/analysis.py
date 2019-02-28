@@ -98,61 +98,6 @@ imperial_density_date_ranges = [DateRange(-1500,-500),
 class InvalidDateRange(Exception):
     pass
 
-# Contain and analyse imperial density information
-class ImperialDensity(object):
-    def __init__(self, world, date_ranges=imperial_density_date_ranges):
-        self.world = world
-        self.date_ranges = date_ranges
-
-        self.imperial_density = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
-        self.samples = {era: 0 for era in date_ranges}
-
-    def sample(self):
-        # Create list of tiles to sample, only tiles with agriculture
-        agricultural_tiles = [tile for tile in self.world.tiles if tile.terrain.polity_forming]
-        agricultural_tiles[:] = [tile for tile in agricultural_tiles \
-                if tile.is_active(self.world.step_number)]
-
-        # Create list of eras to add imperial density to, only those that
-        # contain the current year
-        year = self.world.year()
-        active_eras = [era for era in self.date_ranges if era.is_within(year)]
-        for tile in agricultural_tiles:
-            if tile.polity.size() > _LARGE_POLITY_THRESHOLD:
-                for era in active_eras:
-                    self.imperial_density[era][tile.position[0], tile.position[1]] += 1.
-                    self.samples[era] += 1
-
-    def export(self, normalise=False, highlight_desert=False, highlight_steppe=False):
-        for era in self.date_ranges:
-            fig, ax, colour_map = _init_world_plot()
-            plot_data = self.imperial_density[era]
-            # Express data as RGBA values
-            if normalise:
-                plot_data = plot_data / np.max(plot_data)
-            else:
-                plot_data = plot_data / self.samples[era]
-            plot_data = colour_map(plot_data)
-            plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
-
-            im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
-            fig.colorbar(im)
-            fig.savefig('imperial_density_{}.pdf'.format(era), format='pdf')
-
-    def dump(self, outfile):
-        with open(outfile, 'wb') as picklefile:
-            pickle.dump({str(key): value for key,value in self.imperial_density.items()},
-                    picklefile)
-
-    def load(self, infile):
-        with open(infile, 'rb') as picklefile:
-            data = pickle.load(picklefile)
-            for era in self.imperial_density.items():
-                if era in data.keys():
-                    self.imperial_density[era] = data[era]
-                else:
-                    raise InvalidDateRange("Date range {} in file {} does not match any in ImperialDensity object".format(era, infile))
-
 # Establish the figure, axis and colourmap for a standard map plot
 def _init_world_plot():
         # Initialise figure and axis
@@ -366,23 +311,60 @@ class AccumulatorBase(object):
     def sample(self):
         pass
 
-    def plot(self, highlight_desert=False, highlight_steppe=False):
-        for era in self.date_ranges:
-            fig, ax, colour_map = _init_world_plot()
-            plot_data = self.data[era]
+    def preprocess(self, data, era):
+        return data / np.max(data)
 
-            plot_data = plot_data / np.max(plot_data)
-            plot_data = colour_map(plot_data)
-            plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
-            im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
-            fig.colorbar(im)
-            fig.savefig('{}_{}.pdf'.format(self._prefix,era), format='pdf')
+    def min_max(self, data, era):
+        return 0, np.max(data)
+
+    def plot_all(self, highlight_desert=False, highlight_steppe=False):
+        for era in self.date_ranges:
+            self.plot(era, highlight_desert, highlight_steppe)
+
+    def plot(self, era, highlight_desert=False, highlight_steppe=False):
+        fig, ax, colour_map = _init_world_plot()
+        plot_data = self.data[era]
+
+        plot_data = self.preprocess(plot_data, era)
+        plot_data = colour_map(plot_data)
+        plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
+        vmin, vmax = self.min_max(plot_data, era)
+        im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmin=vmin, vmax=vmax)
+        fig.colorbar(im)
+        fig.savefig('{}_{}.pdf'.format(self._prefix,era), format='pdf')
 
     def dump(self, outfile):
         with open(outfile, 'wb') as picklefile:
             pickle.dump(
                 {str(key): value for key,value in self.data.items()},
                 picklefile)
+
+# Eumerate imperial density
+class ImperialDensity(AccumulatorBase):
+    _prefix = 'imperial_density'
+
+    def __init__(self, world, date_ranges=imperial_density_date_ranges):
+        super().__init__(world, date_ranges)
+        self.samples = {era: 0 for era in date_ranges}
+
+    def sample(self):
+        # Create list of tiles to sample, only tiles with agriculture
+        agricultural_tiles = [tile for tile in self.world.tiles if tile.terrain.polity_forming]
+        agricultural_tiles[:] = [tile for tile in agricultural_tiles \
+                if tile.is_active(self.world.step_number)]
+
+        # Create list of eras to add imperial density to, only those that
+        # contain the current year
+        year = self.world.year()
+        active_eras = [era for era in self.date_ranges if era.is_within(year)]
+        for tile in agricultural_tiles:
+            if tile.polity.size() > _LARGE_POLITY_THRESHOLD:
+                for era in active_eras:
+                    self.data[era][tile.position[0], tile.position[1]] += 1.
+                    self.samples[era] += 1
+
+    def min_max(self, data, era):
+        return 0, np.max(self.data[era])
 
 # Enumerate and analyse attack frequency in each tile
 class AttackEvents(AccumulatorBase):

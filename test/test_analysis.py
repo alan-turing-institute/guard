@@ -10,7 +10,7 @@ def test_imperial_density_summation(generate_world):
 
     # Ensure imperial density is zero with no large polities
     imperial_density.sample()
-    assert np.all(imperial_density.imperial_density[date_range] == np.zeros([map_.xdim,map_.ydim]))
+    assert np.all(imperial_density.data[date_range] == np.zeros([map_.xdim,map_.ydim]))
 
     # Create a large (size >= 10) polity by adding communities in coordinates 
     # (0:2,0:4) to the polity at(4,4)
@@ -21,11 +21,11 @@ def test_imperial_density_summation(generate_world):
             map_.index(4,4).polity.add_community(map_.index(x,y))
             test_density[x,y] = 1.
     imperial_density.sample()
-    assert np.all(imperial_density.imperial_density[date_range] == test_density)
+    assert np.all(imperial_density.data[date_range] == test_density)
 
     # Test one more iteration with the same polities
     imperial_density.sample()
-    assert np.all(imperial_density.imperial_density[date_range] == 2.0*test_density)
+    assert np.all(imperial_density.data[date_range] == 2.0*test_density)
 
 class TestDateRange(object):
     def test_label(self):
