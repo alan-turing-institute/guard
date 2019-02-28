@@ -10,7 +10,7 @@ def test_imperial_density_summation(generate_world):
 
     # Ensure imperial density is zero with no large polities
     imperial_density.sample()
-    assert np.all(imperial_density.imperial_density[date_range] == np.zeros([map_.xdim,map_.ydim]))
+    assert np.all(imperial_density.data[date_range] == np.zeros([map_.xdim,map_.ydim]))
 
     # Create a large (size >= 10) polity by adding communities in coordinates 
     # (0:2,0:4) to the polity at(4,4)
@@ -21,11 +21,11 @@ def test_imperial_density_summation(generate_world):
             map_.index(4,4).polity.add_community(map_.index(x,y))
             test_density[x,y] = 1.
     imperial_density.sample()
-    assert np.all(imperial_density.imperial_density[date_range] == test_density)
+    assert np.all(imperial_density.data[date_range] == test_density)
 
     # Test one more iteration with the same polities
     imperial_density.sample()
-    assert np.all(imperial_density.imperial_density[date_range] == 2.0*test_density)
+    assert np.all(imperial_density.data[date_range] == 2.0*test_density)
 
 class TestDateRange(object):
     def test_label(self):
@@ -46,10 +46,16 @@ class TestDateRange(object):
 
         assert test_dict['0-500AD'] == 'test'
 
+    def test_from_string(self):
+        date_range_1 = analysis.DateRange(-500,200)
+        date_range_2 = analysis.DateRange.from_string('500BC-200AD')
+
+        assert date_range_1 == date_range_2
+
 def test_population_data(generate_world):
     map_ = world.World(from_file=context.project_dir+'/test/data/test_map_5x5.yml')
     cities = analysis.CitiesPopulation(map_, context.project_dir+'/test/data/test_cities.yml')
 
-    assert cities.population['0-500AD'][0,0] == 42000
-    assert cities.population['1000BC-0'][0,0] == 42000
-    assert cities.population['1400AD-1500AD'][2,4] == 400000
+    assert cities.data['0-500AD'][0,0] == 42000
+    assert cities.data['1000BC-0'][0,0] == 42000
+    assert cities.data['1400AD-1500AD'][2,4] == 400000

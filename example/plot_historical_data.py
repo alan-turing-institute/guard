@@ -19,4 +19,6 @@ historical_data = pickle.load(open(project_dir+'/data/imperial_density_data.pkl'
 for era in historical_data:
     imperial_density.imperial_density_eras.append(era/10.)
 
-imperial_density.export(normalise=False,highlight_steppe=False)
+imperial_density.preprocess = analysis.AccumulatorBase.preprocess
+imperial_density.min_max = analysis.AccumulatorBase.min_max
+imperial_density.plot(highlight_steppe=False)

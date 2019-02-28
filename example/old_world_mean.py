@@ -27,8 +27,8 @@ for sim in range(n_sim):
 # Average imperial density for all simulations
 mean_impd = analysis.ImperialDensity(map_)
 for era in date_ranges:
-    mean_impd.imperial_density[era] = sum([run.imperial_density[era] for run in imperial_density])
-    mean_impd.imperial_density[era] = mean_impd.imperial_density[era] / n_sim
+    mean_impd.data[era] = sum([run.data[era] for run in imperial_density])
+    mean_impd.data[era] = mean_impd.data[era] / n_sim
 
-mean_impd.export(normalise=True,highlight_steppe=False)
+mean_impd.plot_all(highlight_steppe=False)
 mean_impd.dump('./imperial_density.pkl')

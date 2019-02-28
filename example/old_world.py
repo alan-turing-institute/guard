@@ -23,5 +23,6 @@ for step in range(1500):
     #    analysis.plot_military_techs(map_)
     #    analysis.plot_ultrasocietal_traits(map_)
 
-imperial_density.export(normalise=True,highlight_steppe=True)
 imperial_density.dump('./imperial_density.pkl')
+#imperial_density = analysis.ImperialDensity.from_file(map_, './imperial_density.pkl')
+imperial_density.plot_all(highlight_steppe=True)

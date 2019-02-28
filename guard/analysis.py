@@ -23,6 +23,22 @@ class DateRange(object):
         self.end_year = end_year
         self.label = self._create_label()
 
+    @classmethod
+    def from_string(cls,string):
+        # Get dates in AD/BC format from string
+        dates = string.split('-')
+
+        # Change into integer representation
+        for i,date in enumerate(dates):
+            if date == '0':
+                dates[i] = 0
+            elif date[-2:] == 'BC':
+                dates[i] = int(date[:-2])*-1
+            else:
+                dates[i] = int(date[:-2])
+
+        return cls(*dates)
+
     def _create_label(self):
         if self.start_year < 0:
             label = '{:d}BC-'.format(abs(self.start_year))
@@ -81,61 +97,6 @@ imperial_density_date_ranges = [DateRange(-1500,-500),
 
 class InvalidDateRange(Exception):
     pass
-
-# Contain and analyse imperial density information
-class ImperialDensity(object):
-    def __init__(self, world, date_ranges=imperial_density_date_ranges):
-        self.world = world
-        self.date_ranges = date_ranges
-
-        self.imperial_density = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
-        self.samples = {era: 0 for era in date_ranges}
-
-    def sample(self):
-        # Create list of tiles to sample, only tiles with agriculture
-        agricultural_tiles = [tile for tile in self.world.tiles if tile.terrain.polity_forming]
-        agricultural_tiles[:] = [tile for tile in agricultural_tiles \
-                if tile.is_active(self.world.step_number)]
-
-        # Create list of eras to add imperial density to, only those that
-        # contain the current year
-        year = self.world.year()
-        active_eras = [era for era in self.date_ranges if era.is_within(year)]
-        for tile in agricultural_tiles:
-            if tile.polity.size() > _LARGE_POLITY_THRESHOLD:
-                for era in active_eras:
-                    self.imperial_density[era][tile.position[0], tile.position[1]] += 1.
-                    self.samples[era] += 1
-
-    def export(self, normalise=False, highlight_desert=False, highlight_steppe=False):
-        for era in self.date_ranges:
-            fig, ax, colour_map = _init_world_plot()
-            plot_data = self.imperial_density[era]
-            # Express data as RGBA values
-            if normalise:
-                plot_data = plot_data / np.max(plot_data)
-            else:
-                plot_data = plot_data / self.samples[era]
-            plot_data = colour_map(plot_data)
-            plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
-
-            im = ax.imshow(np.rot90(plot_data), cmap=colour_map)
-            fig.colorbar(im)
-            fig.savefig('imperial_density_{}.pdf'.format(era), format='pdf')
-
-    def dump(self, outfile):
-        with open(outfile, 'wb') as picklefile:
-            pickle.dump({str(key): value for key,value in self.imperial_density.items()},
-                    picklefile)
-
-    def load(self, infile):
-        with open(infile, 'rb') as picklefile:
-            data = pickle.load(picklefile)
-            for era, imperial_density in self.imperial_density.items():
-                if era in data.keys():
-                    self.imperial_density[era] = data[era]
-                else:
-                    raise InvalidDateRange("Date range {} in file {} does not match any in ImperialDensity object".format(era, infile))
 
 # Establish the figure, axis and colourmap for a standard map plot
 def _init_world_plot():
@@ -222,34 +183,120 @@ def plot_active_agriculture(world, highlight_desert=False, highlight_steppe=Fals
         fig.colorbar(im)
         fig.savefig('active_{:04d}.pdf'.format(world.step_number), format='pdf')
 
-# Analyse population data of cities
-class CitiesPopulation(object):
-    # Flag for pruning values before regression
-    _REMOVE_FLAG = -5
+# Base class for accumulators of tile wise data
+class AccumulatorBase(object):
+    _prefix = None
 
-    def __init__(self, world, data_file, date_ranges=cities_date_ranges):
+    def __init__(self, world, date_ranges=None):
         self.world = world
         self.date_ranges = date_ranges
+        self.data = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
 
-        # Population in each tile for each era
-        self.population = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
+    @classmethod
+    def from_file(cls, world, data_file):
+        date_ranges = []
+        data = {}
+        with open(data_file, 'rb') as picklefile:
+            data_dict = pickle.load(picklefile)
+            for era, value in data_dict.items():
+                daterange = DateRange.from_string(era)
+                date_ranges.append(daterange)
+                data[daterange] = value
 
-        # Sum populations from cities and eras
-        with open(data_file, 'r') as yamlfile:
-            cities_data = yaml.load(yamlfile)
+            accumulator = cls(world, date_ranges)
+            accumulator.data = data
+        return accumulator
 
-            for city in cities_data:
-                for era in date_ranges:
-                    try:
-                        self.population[era][city['x'],city['y']] += city['population'][era]
-                    except KeyError:
-                        raise InvalidDateRange("Date range {} not in city data\n\t{}".format(era,city))
+    def sample(self):
+        pass
 
-    def plot_population_heatmap(self, blur=False):
+    def preprocess(self, data, era):
+        return data / np.max(data)
+
+    def min_max(self, data, era):
+        return 0, np.max(data)
+
+    def plot_all(self, highlight_desert=False, highlight_steppe=False):
+        for era in self.date_ranges:
+            self.plot(era, highlight_desert, highlight_steppe)
+
+    def plot(self, era, highlight_desert=False, highlight_steppe=False):
+        fig, ax, colour_map = _init_world_plot()
+        plot_data = self.data[era]
+
+        plot_data = self.preprocess(plot_data, era)
+        plot_data = colour_map(plot_data)
+        plot_data = _colour_special_tiles(plot_data, self.world, highlight_desert, highlight_steppe)
+        vmin, vmax = self.min_max(plot_data, era)
+        im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmin=vmin, vmax=vmax)
+        fig.colorbar(im)
+        fig.savefig('{}_{}.pdf'.format(self._prefix,era), format='pdf')
+
+    def dump(self, outfile):
+        with open(outfile, 'wb') as picklefile:
+            pickle.dump(
+                {str(key): value for key,value in self.data.items()},
+                picklefile)
+
+# Eumerate imperial density
+class ImperialDensity(AccumulatorBase):
+    _label = 'imperial density'
+    _prefix = 'imperial_density'
+
+    def __init__(self, world, date_ranges=imperial_density_date_ranges):
+        super().__init__(world, date_ranges)
+        self.samples = {era: 0 for era in date_ranges}
+
+    def sample(self):
+        # Create list of tiles to sample, only tiles with agriculture
+        agricultural_tiles = [tile for tile in self.world.tiles if tile.terrain.polity_forming]
+        agricultural_tiles[:] = [tile for tile in agricultural_tiles \
+                if tile.is_active(self.world.step_number)]
+
+        # Create list of eras to add imperial density to, only those that
+        # contain the current year
+        year = self.world.year()
+        active_eras = [era for era in self.date_ranges if era.is_within(year)]
+        for tile in agricultural_tiles:
+            if tile.polity.size() > _LARGE_POLITY_THRESHOLD:
+                for era in active_eras:
+                    self.data[era][tile.position[0], tile.position[1]] += 1.
+                    self.samples[era] += 1
+
+    def min_max(self, data, era):
+        return 0, np.max(self.data[era])
+
+# Enumerate and analyse attack frequency in each tile
+class AttackEvents(AccumulatorBase):
+    _label = 'attack frequency'
+    _prefix = 'attack_frequency'
+
+    def __init__(self, world, date_ranges=None):
+        super().__init__(world, date_ranges)
+
+    def sample(self, tile):
+        year = self.world.year()
+        active_eras = [era for era in self.date_ranges if era.is_within(year)]
+        for era in active_eras:
+            self.attacks[era][tile.position[0], tile.position[1]] += 1.
+
+# Base class for correlated data projected onto the map with tilewise properties
+class CorrelateBase(object):
+    _label = None
+    _prefix = None
+    _REMOVE_FLAG = -5
+
+    def __init__(self, world, date_ranges):
+        self.world = world
+        self.date_ranges = date_ranges
+        self.data = {era: np.zeros([world.xdim, world.ydim]) for era in date_ranges}
+
+    # Draw a heatmap of the data projected onto the map
+    def plot_heatmap(self, blur=False):
         for era in self.date_ranges:
             fig, ax, colour_map = _init_world_plot()
 
-            plot_data = self.population[era]
+            plot_data = self.data[era]
 
             if blur:
                 plot_data = ndimage.gaussian_filter(plot_data, sigma=blur)
@@ -264,14 +311,16 @@ class CitiesPopulation(object):
 
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmax=vmax, vmin=0)
             fig.colorbar(im)
-            fig.savefig('population_{}.pdf'.format(era))
+            fig.savefig('{}_{}.pdf'.format(self._prefix,era))
 
-    def correlate(self, imperial_density, blur=False, cumulative=False):
-        assert self.world is imperial_density.world
-        common_eras = [era for era in self.date_ranges if era in imperial_density.date_ranges]
+    # Perform a linear regression of the accumaltors date against the
+    # correlators data and plot the result
+    def correlate(self, accumulator, blur=False, cumulative=False):
+        assert self.world is accumulator.world
+        common_eras = [era for era in self.date_ranges if era in accumulator.date_ranges]
 
         if cumulative:
-            cumulative_impd = np.zeros([self.world.xdim, self.world.ydim])
+            cumulative_sum = np.zeros([self.world.xdim, self.world.ydim])
 
         # Figure and axes
         fig, ax = plt.subplots()
@@ -279,46 +328,84 @@ class CitiesPopulation(object):
         # cities data and imperial denisty
         for era in common_eras:
             # Axes setup
-            ax.set_xlabel=('Imperial Density')
-            ax.set_ylabel=('Population')
+            ax.set_xlabel(accumulator._label)
+            ax.set_ylabel(self._label)
             ax.set_title(str(era))
 
-            impd = imperial_density.imperial_density[era]
+            comparison = accumulator.data[era]
             if cumulative:
-                impd += cumulative_impd
-                cumulative_impd = impd
-            pop = self.population[era]
+                comparison += cumulative_sum
+                cumulative_sum = comparison
+            data = self.data[era]
 
             if blur:
-                pop = ndimage.gaussian_filter(pop, sigma=blur)
+                data = ndimage.gaussian_filter(data, sigma=blur)
 
             # Don't compare sea tiles
             for tile in self.world.tiles:
                 if tile.terrain == terrain.sea:
                     x, y = tile.position[0], tile.position[1]
-                    impd[x,y] = self._REMOVE_FLAG
-                    pop[x,y] = self._REMOVE_FLAG
+                    comparison[x,y] = self._REMOVE_FLAG
+                    data[x,y] = self._REMOVE_FLAG
 
-            impd = impd.flatten()
-            pop = pop.flatten()
+            comparison = comparison.flatten()
+            data = data.flatten()
 
             if blur == False:
-                # Only compare tiles with population data
-                for index in range(len(impd)):
-                    if pop[index] == 0:
-                        impd[index] = self._REMOVE_FLAG
-                        pop[index] = self._REMOVE_FLAG
+                # Only compare tiles with data
+                for index in range(len(comparison)):
+                    if data[index] == 0:
+                        comparison[index] = self._REMOVE_FLAG
+                        data[index] = self._REMOVE_FLAG
 
             # Remove flagged elements
-            impd = np.array([elem for elem in impd if elem != self._REMOVE_FLAG])
-            pop = np.array([elem for elem in pop if elem != self._REMOVE_FLAG])
+            comparison = np.array([elem for elem in comparison if elem != self._REMOVE_FLAG])
+            data = np.array([elem for elem in data if elem != self._REMOVE_FLAG])
 
-            linreg = stats.linregress(impd,pop)
+            # Linear regression
+            linreg = stats.linregress(comparison,data)
 
-            ax.plot(impd, pop, 'x')
-            ax.plot(impd, impd*linreg.slope + linreg.intercept)
+            # Scatter plot of data against comparison with best fit line
+            ax.plot(comparison, data, 'x')
+            ax.plot(comparison, comparison*linreg.slope + linreg.intercept)
             ax.text(0, 1, str(linreg.rvalue), transform=ax.transAxes)
 
             fig.tight_layout()
-            fig.savefig('ipd_pop_{}.pdf'.format(era), format='pdf')
+            fig.savefig('{}_{}_correlation_{}.pdf'.format(self._prefix,accumulator._prefix,era), format='pdf')
             ax.cla()
+
+# Population corralatable class
+class CitiesPopulation(CorrelateBase):
+    _label = 'population'
+    _prefix = 'population'
+
+    def __init__(self, world, data_file, date_ranges=cities_date_ranges):
+        super().__init__(world, date_ranges)
+
+        # Sum populations from cities and eras
+        with open(data_file, 'r') as yamlfile:
+            cities_data = yaml.load(yamlfile)
+
+            for city in cities_data:
+                for era in date_ranges:
+                    try:
+                        self.data[era][city['x'],city['y']] += city['population'][era]
+                    except KeyError:
+                        raise InvalidDateRange("Date range {} not in city data\n\t{}".format(era,city))
+
+# Battles corralatable class
+class Battles(CorrelateBase):
+    _label = 'number of battles'
+    _prefix = 'battles'
+
+    def __init__(self, world, date_ranges, data_file):
+        super().__init__(world, date_ranges)
+
+        # Sum battles from data file
+        with open(data_file, 'r') as yamlfile:
+            battles = yaml.load(yamlfile)
+
+            for battle in battles:
+                for era in self.date_ranges:
+                    if era.is_within(battle['year']):
+                        self.data[era][battle['x'], battle['y']] += 1.
