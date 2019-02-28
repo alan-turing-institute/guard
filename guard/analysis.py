@@ -23,8 +23,8 @@ class DateRange(object):
         self.end_year = end_year
         self.label = self._create_label()
 
-    @staticmethod
-    def from_string(string):
+    @classmethod
+    def from_string(cls,string):
         # Get dates in AD/BC format from string
         dates = string.split('-')
 
@@ -37,7 +37,7 @@ class DateRange(object):
             else:
                 dates[i] = int(date[:-2])
 
-        return DateRange(*dates)
+        return cls(*dates)
 
     def _create_label(self):
         if self.start_year < 0:
