@@ -240,6 +240,7 @@ class AccumulatorBase(object):
 
 # Eumerate imperial density
 class ImperialDensity(AccumulatorBase):
+    _label = 'imperial density'
     _prefix = 'imperial_density'
 
     def __init__(self, world, date_ranges=imperial_density_date_ranges):
@@ -267,6 +268,7 @@ class ImperialDensity(AccumulatorBase):
 
 # Enumerate and analyse attack frequency in each tile
 class AttackEvents(AccumulatorBase):
+    _label = 'attack frequency'
     _prefix = 'attack_frequency'
 
     def __init__(self, world, date_ranges=None):
@@ -280,6 +282,7 @@ class AttackEvents(AccumulatorBase):
 
 # Base class for correlated data projected onto the map with tilewise properties
 class CorrelateBase(object):
+    _label = None
     _prefix = None
     _REMOVE_FLAG = -5
 
@@ -325,8 +328,8 @@ class CorrelateBase(object):
         # cities data and imperial denisty
         for era in common_eras:
             # Axes setup
-            ax.set_xlabel=('Imperial Density')
-            ax.set_ylabel=('Population')
+            ax.set_xlabel(accumulator._label)
+            ax.set_ylabel(self._label)
             ax.set_title(str(era))
 
             comparison = accumulator.data[era]
@@ -373,6 +376,7 @@ class CorrelateBase(object):
 
 # Population corralatable class
 class CitiesPopulation(CorrelateBase):
+    _label = 'population'
     _prefix = 'population'
 
     def __init__(self, world, date_ranges, data_file):
@@ -391,6 +395,7 @@ class CitiesPopulation(CorrelateBase):
 
 # Battles corralatable class
 class Battles(CorrelateBase):
+    _label = 'number of battles'
     _prefix = 'battles'
 
     def __init__(self, world, date_ranges, data_file):
