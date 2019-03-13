@@ -35,18 +35,28 @@ def _init_world_plot():
 
 # Colour sea, steppe and desert tiles distinctly
 def _colour_special_tiles(rgba_data, world, highlight_desert=False,
-                          highlight_steppe=False):
+                          highlight_steppe=False, area=None):
+    if area is None:
+        xmin, xmax = 0, world.xdim
+        ymin, ymax = 0, world.ydim
+    else:
+        xmin, xmax, ymin, ymax = area
+
     # Colour sea and optionally desert
     for tile in world.tiles:
         x, y = tile.position[0], tile.position[1]
-        if tile.terrain is terrain.sea:
-            rgba_data[x][y] = _SEA
-        elif tile.terrain is terrain.desert:
-            if highlight_desert:
-                rgba_data[x][y] = _DESERT
-        elif tile.terrain is terrain.steppe:
-            if highlight_steppe:
-                rgba_data[x][y] = _STEPPE
+        if x < xmax and x >= xmin:
+            if y < ymax and y >= ymin:
+                x -= xmin
+                y -= ymin
+                if tile.terrain is terrain.sea:
+                    rgba_data[x][y] = _SEA
+                elif tile.terrain is terrain.desert:
+                    if highlight_desert:
+                        rgba_data[x][y] = _DESERT
+                elif tile.terrain is terrain.steppe:
+                    if highlight_steppe:
+                        rgba_data[x][y] = _STEPPE
     return rgba_data
 
 
@@ -152,18 +162,28 @@ class AccumulatorBase(object):
     def min_max(self, data, era):
         return 0, np.max(data)
 
-    def plot_all(self, highlight_desert=False, highlight_steppe=False):
+    def plot_all(self, highlight_desert=False, highlight_steppe=False,
+                 area=None):
         for era in self.date_ranges:
-            self.plot(era, highlight_desert, highlight_steppe)
+            self.plot(era, highlight_desert, highlight_steppe, area)
 
-    def plot(self, era, highlight_desert=False, highlight_steppe=False):
+    def plot(self, era, highlight_desert=False, highlight_steppe=False,
+             area=None):
         fig, ax, colour_map = _init_world_plot()
-        plot_data = self.data[era]
+
+        if area is None:
+            xmin, xmax = 0, self.world.xdim
+            ymin, ymax = 0, self.world.ydim
+        else:
+            xmin, xmax, ymin, ymax = area
+
+        plot_data = self.data[era][xmin:xmax, ymin:ymax]
 
         plot_data = self.preprocess(plot_data, era)
         plot_data = colour_map(plot_data)
         plot_data = _colour_special_tiles(plot_data, self.world,
-                                          highlight_desert, highlight_steppe)
+                                          highlight_desert, highlight_steppe,
+                                          area=area)
         vmin, vmax = self.min_max(plot_data, era)
         im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmin=vmin,
                        vmax=vmax)
@@ -219,7 +239,7 @@ class AttackEvents(AccumulatorBase):
         year = self.world.year()
         active_eras = [era for era in self.date_ranges if era.is_within(year)]
         for era in active_eras:
-            self.attacks[era][tile.position[0], tile.position[1]] += 1.
+            self.data[era][tile.position[0], tile.position[1]] += 1.
 
 
 # Base class for correlated data projected onto the map with tilewise
@@ -236,11 +256,17 @@ class CorrelateBase(object):
                      for era in date_ranges}
 
     # Draw a heatmap of the data projected onto the map
-    def plot_heatmap(self, blur=False):
+    def plot_heatmap(self, blur=False, area=None):
+        if area is None:
+            xmin, xmax = 0, self.world.xdim
+            ymin, ymax = 0, self.world.ydim
+        else:
+            xmin, xmax, ymin, ymax = area
+
         for era in self.date_ranges:
             fig, ax, colour_map = _init_world_plot()
 
-            plot_data = self.data[era]
+            plot_data = self.data[era][xmin:xmax, ymin:ymax]
 
             if blur:
                 plot_data = ndimage.gaussian_filter(plot_data, sigma=blur)
@@ -250,7 +276,7 @@ class CorrelateBase(object):
 
             # Create rgb data
             plot_data = colour_map(plot_data)
-            plot_data = _colour_special_tiles(plot_data, self.world)
+            plot_data = _colour_special_tiles(plot_data, self.world, area=area)
 
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmax=vmax,
                            vmin=0)
@@ -259,13 +285,31 @@ class CorrelateBase(object):
 
     # Perform a linear regression of the accumaltors date against the
     # correlators data and plot the result
-    def correlate(self, accumulator, blur=False, cumulative=False):
+    def correlate(self, accumulator, blur=False, cumulative=False, area=None):
         assert self.world is accumulator.world
         common_eras = [era for era in self.date_ranges
                        if era in accumulator.date_ranges]
 
+        if area is None:
+            xdim = self.world.xdim
+            ydim = self.world.ydim
+            xmin, xmax = 0, xdim
+            ymin, ymax = 0, ydim
+        else:
+            xmin, xmax, ymin, ymax = area
+            xdim = xmax - xmin
+            ydim = ymax - ymin
+
         if cumulative:
-            cumulative_sum = np.zeros([self.world.xdim, self.world.ydim])
+            cumulative_sum = np.zeros([xdim, ydim])
+
+        sea_tiles = []
+        for tile in self.world.tiles:
+            if tile.terrain == terrain.sea:
+                x, y = tile.position[0], tile.position[1]
+                if x < xmax and x >= xmin:
+                    if y < ymax and y >= ymin:
+                        sea_tiles.append((x-xmin, y-ymin))
 
         # Figure and axes
         fig, ax = plt.subplots()
@@ -277,21 +321,19 @@ class CorrelateBase(object):
             ax.set_ylabel(self._label)
             ax.set_title(str(era))
 
-            comparison = accumulator.data[era]
+            comparison = accumulator.data[era][xmin:xmax, ymin:ymax]
             if cumulative:
                 comparison += cumulative_sum
                 cumulative_sum = comparison
-            data = self.data[era]
+            data = self.data[era][xmin:xmax, ymin:ymax]
 
             if blur:
                 data = ndimage.gaussian_filter(data, sigma=blur)
 
             # Don't compare sea tiles
-            for tile in self.world.tiles:
-                if tile.terrain == terrain.sea:
-                    x, y = tile.position[0], tile.position[1]
-                    comparison[x, y] = self._REMOVE_FLAG
-                    data[x, y] = self._REMOVE_FLAG
+            for x, y in sea_tiles:
+                comparison[x, y] = self._REMOVE_FLAG
+                data[x, y] = self._REMOVE_FLAG
 
             comparison = comparison.flatten()
             data = data.flatten()
