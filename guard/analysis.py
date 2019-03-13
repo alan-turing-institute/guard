@@ -239,7 +239,7 @@ class AttackEvents(AccumulatorBase):
         year = self.world.year()
         active_eras = [era for era in self.date_ranges if era.is_within(year)]
         for era in active_eras:
-            self.attacks[era][tile.position[0], tile.position[1]] += 1.
+            self.data[era][tile.position[0], tile.position[1]] += 1.
 
 
 # Base class for correlated data projected onto the map with tilewise
