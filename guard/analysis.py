@@ -311,11 +311,11 @@ class CorrelateBase(object):
                     if y < ymax and y >= ymin:
                         sea_tiles.append((x-xmin, y-ymin))
 
-        # Figure and axes
-        fig, ax = plt.subplots()
         # Correlate population and imperial density between eras in both
         # cities data and imperial denisty
         for era in common_eras:
+            # Figure and axes
+            fig, ax = plt.subplots()
             # Axes setup
             ax.set_xlabel(accumulator._label)
             ax.set_ylabel(self._label)
@@ -362,7 +362,6 @@ class CorrelateBase(object):
             fig.tight_layout()
             fig.savefig('{}_{}_correlation_{}.pdf'.format(
                 self._prefix, accumulator._prefix, era), format='pdf')
-            ax.cla()
 
 
 # Population corralatable class
