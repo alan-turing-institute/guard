@@ -300,7 +300,7 @@ class CorrelateBase(object):
     # Perform a linear regression of the accumaltors date against the
     # correlators data and plot the result
     def correlate(self, accumulator, blur=False, cumulative=False, area=None,
-                  exclude=None):
+                  exclude=None, log_log=False):
         assert self.world is accumulator.world
         common_eras = [era for era in self.date_ranges
                        if era in accumulator.date_ranges]
@@ -361,11 +361,23 @@ class CorrelateBase(object):
                         comparison[index] = self._REMOVE_FLAG
                         data[index] = self._REMOVE_FLAG
 
+            if log_log is True:
+                # Remove any tiles with value 0
+                for index in range(len(comparison)):
+                    if data[index] == 0 or comparison[index] == 0:
+                        comparison[index] = self._REMOVE_FLAG
+                        data[index] = self._REMOVE_FLAG
+
             # Remove flagged elements
             comparison = np.array([elem for elem in comparison
                                    if elem != self._REMOVE_FLAG])
             data = np.array([elem for elem in data
                              if elem != self._REMOVE_FLAG])
+
+            # Take logarithmns if requested
+            if log_log is True:
+                comparison = np.log(comparison)
+                data = np.log(data)
 
             # Linear regression
             linreg = stats.linregress(comparison, data)
