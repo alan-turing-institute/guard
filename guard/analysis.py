@@ -174,14 +174,14 @@ class AccumulatorBase(object):
         return 0, np.max(data)
 
     def plot_all(self, highlight_desert=False, highlight_steppe=False,
-                 area=None):
+                 area=None, highlight=None):
         if area is None:
             area = Rectangle.entire_map(self.world)
         for era in self.date_ranges:
-            self.plot(era, highlight_desert, highlight_steppe, area)
+            self.plot(era, highlight_desert, highlight_steppe, area, highlight)
 
     def plot(self, era, highlight_desert=False, highlight_steppe=False,
-             area=None):
+             area=None, highlight=None):
         fig, ax, colour_map = _init_world_plot()
 
         if area is None:
@@ -189,13 +189,16 @@ class AccumulatorBase(object):
         xmin, xmax, ymin, ymax = area.bounds()
 
         plot_data = self.data[era][xmin:xmax, ymin:ymax]
-
         plot_data = self.preprocess(plot_data, era)
+        vmin, vmax = self.min_max(plot_data, era)
+
         plot_data = colour_map(plot_data)
         plot_data = _colour_special_tiles(plot_data, self.world,
                                           highlight_desert, highlight_steppe,
                                           area)
-        vmin, vmax = self.min_max(plot_data, era)
+        if highlight:
+            plot_data = _highlight(plot_data, area, highlight)
+
         im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmin=vmin,
                        vmax=vmax)
         fig.colorbar(im)
