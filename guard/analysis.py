@@ -237,9 +237,6 @@ class ImperialDensity(AccumulatorBase):
                     self.data[era][tile.position[0], tile.position[1]] += 1.
                     self.samples[era] += 1
 
-    def min_max(self, data, era):
-        return 0, np.max(self.data[era])
-
 
 # Enumerate and analyse attack frequency in each tile
 class AttackEvents(AccumulatorBase):
