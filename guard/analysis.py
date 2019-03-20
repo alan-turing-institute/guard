@@ -1,4 +1,5 @@
 from . import terrain
+from .area import Rectangle
 from .daterange import (DateRange, InvalidDateRange,
                         imperial_density_date_ranges, cities_date_ranges)
 import matplotlib.pyplot as plt
@@ -37,26 +38,22 @@ def _init_world_plot():
 def _colour_special_tiles(rgba_data, world, highlight_desert=False,
                           highlight_steppe=False, area=None):
     if area is None:
-        xmin, xmax = 0, world.xdim
-        ymin, ymax = 0, world.ydim
-    else:
-        xmin, xmax, ymin, ymax = area
-
+        area = Rectangle.entire_map(world)
+    xmin, xmax, ymin, ymax = area.bounds()
     # Colour sea and optionally desert
     for tile in world.tiles:
         x, y = tile.position[0], tile.position[1]
-        if x < xmax and x >= xmin:
-            if y < ymax and y >= ymin:
-                x -= xmin
-                y -= ymin
-                if tile.terrain is terrain.sea:
-                    rgba_data[x][y] = _SEA
-                elif tile.terrain is terrain.desert:
-                    if highlight_desert:
-                        rgba_data[x][y] = _DESERT
-                elif tile.terrain is terrain.steppe:
-                    if highlight_steppe:
-                        rgba_data[x][y] = _STEPPE
+        if area.in_area(x, y):
+            x -= xmin
+            y -= ymin
+            if tile.terrain is terrain.sea:
+                rgba_data[x][y] = _SEA
+            elif tile.terrain is terrain.desert:
+                if highlight_desert:
+                    rgba_data[x][y] = _DESERT
+            elif tile.terrain is terrain.steppe:
+                if highlight_steppe:
+                    rgba_data[x][y] = _STEPPE
     return rgba_data
 
 
@@ -164,6 +161,8 @@ class AccumulatorBase(object):
 
     def plot_all(self, highlight_desert=False, highlight_steppe=False,
                  area=None):
+        if area is None:
+            area = Rectangle.entire_map(self.world)
         for era in self.date_ranges:
             self.plot(era, highlight_desert, highlight_steppe, area)
 
@@ -172,10 +171,8 @@ class AccumulatorBase(object):
         fig, ax, colour_map = _init_world_plot()
 
         if area is None:
-            xmin, xmax = 0, self.world.xdim
-            ymin, ymax = 0, self.world.ydim
-        else:
-            xmin, xmax, ymin, ymax = area
+            area = Rectangle.entire_map(self.world)
+        xmin, xmax, ymin, ymax = area.bounds()
 
         plot_data = self.data[era][xmin:xmax, ymin:ymax]
 
@@ -183,7 +180,7 @@ class AccumulatorBase(object):
         plot_data = colour_map(plot_data)
         plot_data = _colour_special_tiles(plot_data, self.world,
                                           highlight_desert, highlight_steppe,
-                                          area=area)
+                                          area)
         vmin, vmax = self.min_max(plot_data, era)
         im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmin=vmin,
                        vmax=vmax)
@@ -258,10 +255,8 @@ class CorrelateBase(object):
     # Draw a heatmap of the data projected onto the map
     def plot_heatmap(self, blur=False, area=None):
         if area is None:
-            xmin, xmax = 0, self.world.xdim
-            ymin, ymax = 0, self.world.ydim
-        else:
-            xmin, xmax, ymin, ymax = area
+            area = Rectangle.entire_map(self.world)
+        xmin, xmax, ymin, ymax = area.bounds()
 
         for era in self.date_ranges:
             fig, ax, colour_map = _init_world_plot()
@@ -291,14 +286,10 @@ class CorrelateBase(object):
                        if era in accumulator.date_ranges]
 
         if area is None:
-            xdim = self.world.xdim
-            ydim = self.world.ydim
-            xmin, xmax = 0, xdim
-            ymin, ymax = 0, ydim
-        else:
-            xmin, xmax, ymin, ymax = area
-            xdim = xmax - xmin
-            ydim = ymax - ymin
+            area = Rectangle.entire_map(self.world)
+        xmin, xmax, ymin, ymax = area.bounds()
+        xdim = xmax - xmin
+        ydim = ymax - ymin
 
         if cumulative:
             cumulative_sum = np.zeros([xdim, ydim])
@@ -307,9 +298,8 @@ class CorrelateBase(object):
         for tile in self.world.tiles:
             if tile.terrain == terrain.sea:
                 x, y = tile.position[0], tile.position[1]
-                if x < xmax and x >= xmin:
-                    if y < ymax and y >= ymin:
-                        sea_tiles.append((x-xmin, y-ymin))
+                if area.in_area(x, y):
+                    sea_tiles.append((x-xmin, y-ymin))
 
         # Correlate population and imperial density between eras in both
         # cities data and imperial denisty
