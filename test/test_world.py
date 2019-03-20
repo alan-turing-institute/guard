@@ -1,90 +1,131 @@
-from . import context
-from . fixtures import custom_parameters, default_parameters, generate_world, generate_world_with_sea
 from guard import world, community, terrain
 from numpy import sqrt
-import pytest
+import os
+
+project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
 
 # Test the assignment of neighbours
 class TestNeighbours(object):
     # Ensure neighbours are correct in a 2x2 world
     def test_neighbours_2x2(self, generate_world):
-        map_ = generate_world(xdim=2,ydim=2)
+        map_ = generate_world(xdim=2, ydim=2)
 
         # Define correct neighbours
-        neighbours_00 = {'left':None, 'right':map_.index(1,0), 'up':map_.index(0,1), 'down':None}
-        neighbours_01 = {'left':None, 'right':map_.index(1,1), 'up':None, 'down':map_.index(0,0)}
-        neighbours_10 = {'left':map_.index(0,0), 'right':None, 'up':map_.index(1,1), 'down':None}
-        neighbours_11 = {'left':map_.index(0,1), 'right':None, 'up':None, 'down':map_.index(1,0)}
+        neighbours_00 = {'left': None, 'right': map_.index(1, 0),
+                         'up': map_.index(0, 1), 'down': None}
+        neighbours_01 = {'left': None, 'right': map_.index(1, 1),
+                         'up': None, 'down': map_.index(0, 0)}
+        neighbours_10 = {'left': map_.index(0, 0), 'right': None,
+                         'up': map_.index(1, 1), 'down': None}
+        neighbours_11 = {'left': map_.index(0, 1), 'right': None,
+                         'up': None, 'down': map_.index(1, 0)}
 
-        assert map_.index(0,0).neighbours == neighbours_00
-        assert map_.index(0,1).neighbours == neighbours_01
-        assert map_.index(1,0).neighbours == neighbours_10
-        assert map_.index(1,1).neighbours == neighbours_11
+        assert map_.index(0, 0).neighbours == neighbours_00
+        assert map_.index(0, 1).neighbours == neighbours_01
+        assert map_.index(1, 0).neighbours == neighbours_10
+        assert map_.index(1, 1).neighbours == neighbours_11
 
     # Ensure neighbours are correct in a 3x3 world
     def test_neighbours_3x3(self, generate_world):
-        map_ = generate_world(xdim=3,ydim=3)
+        map_ = generate_world(xdim=3, ydim=3)
 
         # Define correct neighbours
-        neighbours_11 = {'left':map_.index(0,1), 'right':map_.index(2,1), \
-                'up':map_.index(1,2), 'down':map_.index(1,0)}
+        neighbours_11 = {'left': map_.index(0, 1), 'right': map_.index(2, 1),
+                         'up': map_.index(1, 2), 'down': map_.index(1, 0)}
 
-        assert map_.index(1,1).neighbours == neighbours_11
+        assert map_.index(1, 1).neighbours == neighbours_11
+
 
 # Test the assignment of littoral neighbours
 class TestLittoralNeighbours(object):
     # Ensure the littoral flag is applied correctly
     def test_littoral_assignment(self, generate_world_with_sea):
-        map_ = generate_world_with_sea(xdim=3, ydim=3, \
-                sea_tiles=[(0,0), (1,2), (2,2)])
+        map_ = generate_world_with_sea(xdim=3, ydim=3,
+                                       sea_tiles=[(0, 0), (1, 2), (2, 2)])
         # Tiles next to sea at (0,0)
-        assert map_.index(1,0).littoral == True
-        assert map_.index(0,1).littoral == True
+        assert map_.index(1, 0).littoral is True
+        assert map_.index(0, 1).littoral is True
 
         # Tiles next to sea at (2,3) and (3,3)
-        assert map_.index(0,2).littoral == True
-        assert map_.index(1,1).littoral == True
-        assert map_.index(2,1).littoral == True
+        assert map_.index(0, 2).littoral is True
+        assert map_.index(1, 1).littoral is True
+        assert map_.index(2, 1).littoral is True
 
         # Tiles not next to any sea
-        assert map_.index(2,0).littoral == False
+        assert map_.index(2, 0).littoral is False
 
     # Ensure littoral neighbours are correct
     def test_littoral_neighbours(self, generate_world_with_sea):
-        map_ = generate_world_with_sea(xdim=3, ydim=3, \
-                sea_tiles = [(0,2), (2,0), (2,1), (2,2)])
+        map_ = generate_world_with_sea(
+            xdim=3, ydim=3,
+            sea_tiles=[(0, 2), (2, 0), (2, 1), (2, 2)]
+            )
 
         # Ensure littoral tiles have themselves as littoral neighbours
-        assert community.LittoralNeighbour(map_.index(0,1), 0) in map_.index(0,1).littoral_neighbours
-        assert community.LittoralNeighbour(map_.index(1,0), 0) in map_.index(1,0).littoral_neighbours
-        assert community.LittoralNeighbour(map_.index(1,1), 0) in map_.index(1,1).littoral_neighbours
-        assert community.LittoralNeighbour(map_.index(1,2), 0) in map_.index(1,2).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(0, 1), 0
+            ) in map_.index(0, 1).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 0), 0
+            ) in map_.index(1, 0).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 1), 0
+            ) in map_.index(1, 1).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 2), 0
+            ) in map_.index(1, 2).littoral_neighbours
 
         # Ensure littoral neighbours on the same sea are correct
-        assert community.LittoralNeighbour(map_.index(1,0), 1) in map_.index(1,1).littoral_neighbours
-        assert community.LittoralNeighbour(map_.index(1,0), 2) in map_.index(1,2).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 0), 1
+            ) in map_.index(1, 1).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 0), 2
+            ) in map_.index(1, 2).littoral_neighbours
 
-        assert community.LittoralNeighbour(map_.index(1,1), 1) in map_.index(1,2).littoral_neighbours
-        assert community.LittoralNeighbour(map_.index(1,1), 1) in map_.index(1,0).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 1), 1
+            ) in map_.index(1, 2).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 1), 1
+            ) in map_.index(1, 0).littoral_neighbours
 
-        assert community.LittoralNeighbour(map_.index(1,2), 1) in map_.index(1,1).littoral_neighbours
-        assert community.LittoralNeighbour(map_.index(1,2), 2) in map_.index(1,0).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 2), 1
+            ) in map_.index(1, 1).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 2), 2
+            ) in map_.index(1, 0).littoral_neighbours
 
-        assert community.LittoralNeighbour(map_.index(0,1), sqrt(2)) in map_.index(1,2).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(0, 1), sqrt(2)
+            ) in map_.index(1, 2).littoral_neighbours
 
-        assert community.LittoralNeighbour(map_.index(1,2), sqrt(2)) in map_.index(0,1).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 2), sqrt(2)
+            ) in map_.index(0, 1).littoral_neighbours
 
         # Ensure littoral neighbours with no sea connection are correct
-        assert community.LittoralNeighbour(map_.index(0,1), 1) in map_.index(1,1).littoral_neighbours
-        assert community.LittoralNeighbour(map_.index(0,1), sqrt(2)) in map_.index(1,0).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(0, 1), 1
+            ) in map_.index(1, 1).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(0, 1), sqrt(2)
+            ) in map_.index(1, 0).littoral_neighbours
 
-        assert community.LittoralNeighbour(map_.index(1,0), sqrt(2)) in map_.index(0,1).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 0), sqrt(2)
+            ) in map_.index(0, 1).littoral_neighbours
 
-        assert community.LittoralNeighbour(map_.index(1,1), 1) in map_.index(0,1).littoral_neighbours
+        assert community.LittoralNeighbour(
+            map_.index(1, 1), 1
+            ) in map_.index(0, 1).littoral_neighbours
 
-    def test_littoral_neighbour_range(self, default_parameters, generate_world):
+    def test_littoral_neighbour_range(self, default_parameters,
+                                      generate_world):
         params = default_parameters
-        map_ = generate_world(xdim=5,ydim=5)
+        map_ = generate_world(xdim=5, ydim=5)
         nsteps = 10
 
         assert map_.sea_attack_distance() == params.base_sea_attack_distance
@@ -92,20 +133,24 @@ class TestLittoralNeighbours(object):
         for i in range(nsteps):
             map_.step()
 
-        assert map_.sea_attack_distance() == params.base_sea_attack_distance + \
-                params.sea_attack_increment * (nsteps)
+        assert map_.sea_attack_distance() == (params.base_sea_attack_distance
+                                              + params.sea_attack_increment
+                                              * (nsteps))
 
     def test_listtoral_neighbours_in_range(self, generate_world_with_sea):
-        map_ = generate_world_with_sea(xdim=5, ydim=5, \
-                sea_tiles = [(2,1), (2,2), (2,3), (2,4), (0,4), (1,4), (3,4), (4,4)])
+        map_ = generate_world_with_sea(
+            xdim=5, ydim=5,
+            sea_tiles=[(2, 1), (2, 2), (2, 3), (2, 4),
+                       (0, 4), (1, 4), (3, 4), (4, 4)]
+            )
 
-        tile = map_.index(2,0)
+        tile = map_.index(2, 0)
         huge_distance = 1000
 
         # Only the tile itself should be at range 0
         in_range = tile.littoral_neighbours_in_range(0)
         assert len(in_range) == 1
-        assert community.LittoralNeighbour(tile,0) in in_range
+        assert community.LittoralNeighbour(tile, 0) in in_range
 
         # No more neighbours at range 1
         in_range = tile.littoral_neighbours_in_range(0)
@@ -114,61 +159,84 @@ class TestLittoralNeighbours(object):
         # Two more neighbours at sqrt(2)
         in_range = tile.littoral_neighbours_in_range(2)
         assert len(in_range) == 3
-        assert community.LittoralNeighbour(tile,0) in in_range
-        assert community.LittoralNeighbour(map_.index(1,1),sqrt(2)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,1),sqrt(2)) in in_range
+        assert community.LittoralNeighbour(tile, 0) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 1), sqrt(2)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 1), sqrt(2)) in in_range
 
         # Two more neighbours at sqrt(5)
         in_range = tile.littoral_neighbours_in_range(3)
         assert len(in_range) == 5
-        assert community.LittoralNeighbour(tile,0) in in_range
-        assert community.LittoralNeighbour(map_.index(1,1),sqrt(2)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,1),sqrt(2)) in in_range
-        assert community.LittoralNeighbour(map_.index(1,2),sqrt(5)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,2),sqrt(5)) in in_range
+        assert community.LittoralNeighbour(tile, 0) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 1), sqrt(2)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 1), sqrt(2)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 2), sqrt(5)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 2), sqrt(5)) in in_range
 
         # Two more neighbours at sqrt(10)
         in_range = tile.littoral_neighbours_in_range(3.6)
         assert len(in_range) == 7
-        assert community.LittoralNeighbour(tile,0) in in_range
-        assert community.LittoralNeighbour(map_.index(1,1),sqrt(2)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,1),sqrt(2)) in in_range
-        assert community.LittoralNeighbour(map_.index(1,2),sqrt(5)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,2),sqrt(5)) in in_range
-        assert community.LittoralNeighbour(map_.index(1,3),sqrt(10)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,3),sqrt(10)) in in_range
+        assert community.LittoralNeighbour(tile, 0) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 1), sqrt(2)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 1), sqrt(2)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 2), sqrt(5)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 2), sqrt(5)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 3), sqrt(10)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 3), sqrt(10)) in in_range
 
         # All nine neighbours at sqrt(13)
         in_range = tile.littoral_neighbours_in_range(huge_distance)
         assert len(in_range) == 9
-        assert community.LittoralNeighbour(tile,0) in in_range
-        assert community.LittoralNeighbour(map_.index(1,1),sqrt(2)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,1),sqrt(2)) in in_range
-        assert community.LittoralNeighbour(map_.index(1,2),sqrt(5)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,2),sqrt(5)) in in_range
-        assert community.LittoralNeighbour(map_.index(1,3),sqrt(10)) in in_range
-        assert community.LittoralNeighbour(map_.index(3,3),sqrt(10)) in in_range
-        assert community.LittoralNeighbour(map_.index(0,3),sqrt(13)) in in_range
-        assert community.LittoralNeighbour(map_.index(4,3),sqrt(13)) in in_range
+        assert community.LittoralNeighbour(tile, 0) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 1), sqrt(2)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 1), sqrt(2)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 2), sqrt(5)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 2), sqrt(5)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(1, 3), sqrt(10)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(3, 3), sqrt(10)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(0, 3), sqrt(13)) in in_range
+        assert community.LittoralNeighbour(
+            map_.index(4, 3), sqrt(13)) in in_range
+
 
 def test_destruction_of_empty_polities(default_parameters, generate_world):
     params = default_parameters
     dimension = 5
     initial_polities = dimension**2
-    map_ = generate_world(xdim=dimension,ydim=dimension)
+    map_ = generate_world(xdim=dimension, ydim=dimension)
     sea_attack = False
 
     attacker = map_.polities[0].communities[0]
     # Initiate an attack guaranteed to succeed
-    attacker.attack(attacker.neighbours['up'], params, sea_attack, probability=1)
+    attacker.attack(attacker.neighbours['up'], params, sea_attack,
+                    probability=1)
     map_.prune_empty_polities()
 
     assert len(map_.polities) == initial_polities - 1
 
+
 def test_disintegration(custom_parameters, generate_world):
     dimension = 5
     params = custom_parameters(disintegration_base=1000)
-    map_ = generate_world(xdim=dimension,ydim=dimension,params=params)
+    map_ = generate_world(xdim=dimension, ydim=dimension, params=params)
 
     for tile in map_.tiles[1:4]:
         map_.polities[0].transfer_community(tile)
@@ -183,12 +251,14 @@ def test_disintegration(custom_parameters, generate_world):
     assert map_.number_of_polities() == 25
     assert all([state.size() == 1 for state in map_.polities])
 
+
 def test_step(generate_world):
-    map_ = generate_world(xdim=5,ydim=5)
+    map_ = generate_world(xdim=5, ydim=5)
     map_.step()
 
+
 def test_step_increment(generate_world):
-    map_ = generate_world(xdim=5,ydim=5)
+    map_ = generate_world(xdim=5, ydim=5)
     nsteps = 10
 
     for i in range(nsteps):
@@ -196,21 +266,34 @@ def test_step_increment(generate_world):
 
     assert map_.step_number == nsteps
 
-def test_community_activation(generate_world):
-    map_ = world.World(from_file=context.project_dir+'/test/data/test_activation.yml')
 
-    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 1
+def test_community_activation(generate_world):
+    map_ = world.World(
+        from_file=project_dir+'/test/data/test_activation.yml'
+        )
+
+    assert len(
+        [tile for tile in map_.tiles
+         if tile.is_active(map_.step_number) is True]
+        ) == 1
 
     map_.step_number = 900
-    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 2
+    assert len(
+        [tile for tile in map_.tiles
+         if tile.is_active(map_.step_number) is True]
+        ) == 2
 
     map_.step_number = 1100
-    assert len([tile for tile in map_.tiles if tile.is_active(map_.step_number) == True]) == 3
+    assert len(
+        [tile for tile in map_.tiles
+         if tile.is_active(map_.step_number) is True]
+        ) == 3
+
 
 def test_yaml_parsing():
-    map_ = world.World(from_file=context.project_dir+'/data/old_world.yml')
+    map_ = world.World(from_file=project_dir+'/data/old_world.yml')
 
-    example_tile = map_.index(29,89)
+    example_tile = map_.index(29, 89)
     assert example_tile.terrain == terrain.steppe
     assert example_tile.elevation == 98 / 1000.
 

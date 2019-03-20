@@ -1,4 +1,5 @@
 from . import terrain
+from .area import Rectangle
 from .daterange import (DateRange, InvalidDateRange,
                         imperial_density_date_ranges, cities_date_ranges)
 import matplotlib.pyplot as plt
@@ -35,18 +36,38 @@ def _init_world_plot():
 
 # Colour sea, steppe and desert tiles distinctly
 def _colour_special_tiles(rgba_data, world, highlight_desert=False,
-                          highlight_steppe=False):
+                          highlight_steppe=False, area=None):
+    if area is None:
+        area = Rectangle.entire_map(world)
+    xmin, xmax, ymin, ymax = area.bounds()
     # Colour sea and optionally desert
     for tile in world.tiles:
         x, y = tile.position[0], tile.position[1]
-        if tile.terrain is terrain.sea:
-            rgba_data[x][y] = _SEA
-        elif tile.terrain is terrain.desert:
-            if highlight_desert:
-                rgba_data[x][y] = _DESERT
-        elif tile.terrain is terrain.steppe:
-            if highlight_steppe:
-                rgba_data[x][y] = _STEPPE
+        if area.in_area(x, y):
+            x -= xmin
+            y -= ymin
+            if tile.terrain is terrain.sea:
+                rgba_data[x][y] = _SEA
+            elif tile.terrain is terrain.desert:
+                if highlight_desert:
+                    rgba_data[x][y] = _DESERT
+            elif tile.terrain is terrain.steppe:
+                if highlight_steppe:
+                    rgba_data[x][y] = _STEPPE
+    return rgba_data
+
+
+# Highlight tiles in an area
+def _highlight(rgba_data, area, highlight):
+    xmin, xmax, ymin, ymax = area.bounds()
+    for x, y in highlight.all_tiles:
+        if area.in_area(x, y):
+            x -= xmin
+            y -= ymin
+            rgba_data[x][y] += np.array([0.3, 0.0, 0.3, 0.0])
+            rgba_data[x][y] = np.array(
+                [min(value, 1.0) for value in rgba_data[x][y]]
+                )
     return rgba_data
 
 
@@ -152,19 +173,32 @@ class AccumulatorBase(object):
     def min_max(self, data, era):
         return 0, np.max(data)
 
-    def plot_all(self, highlight_desert=False, highlight_steppe=False):
+    def plot_all(self, highlight_desert=False, highlight_steppe=False,
+                 area=None, highlight=None):
+        if area is None:
+            area = Rectangle.entire_map(self.world)
         for era in self.date_ranges:
-            self.plot(era, highlight_desert, highlight_steppe)
+            self.plot(era, highlight_desert, highlight_steppe, area, highlight)
 
-    def plot(self, era, highlight_desert=False, highlight_steppe=False):
+    def plot(self, era, highlight_desert=False, highlight_steppe=False,
+             area=None, highlight=None):
         fig, ax, colour_map = _init_world_plot()
-        plot_data = self.data[era]
 
+        if area is None:
+            area = Rectangle.entire_map(self.world)
+        xmin, xmax, ymin, ymax = area.bounds()
+
+        plot_data = self.data[era][xmin:xmax, ymin:ymax]
         plot_data = self.preprocess(plot_data, era)
+        vmin, vmax = self.min_max(plot_data, era)
+
         plot_data = colour_map(plot_data)
         plot_data = _colour_special_tiles(plot_data, self.world,
-                                          highlight_desert, highlight_steppe)
-        vmin, vmax = self.min_max(plot_data, era)
+                                          highlight_desert, highlight_steppe,
+                                          area)
+        if highlight:
+            plot_data = _highlight(plot_data, area, highlight)
+
         im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmin=vmin,
                        vmax=vmax)
         fig.colorbar(im)
@@ -219,7 +253,7 @@ class AttackEvents(AccumulatorBase):
         year = self.world.year()
         active_eras = [era for era in self.date_ranges if era.is_within(year)]
         for era in active_eras:
-            self.attacks[era][tile.position[0], tile.position[1]] += 1.
+            self.data[era][tile.position[0], tile.position[1]] += 1.
 
 
 # Base class for correlated data projected onto the map with tilewise
@@ -236,11 +270,15 @@ class CorrelateBase(object):
                      for era in date_ranges}
 
     # Draw a heatmap of the data projected onto the map
-    def plot_heatmap(self, blur=False):
+    def plot_heatmap(self, blur=False, area=None, highlight=None):
+        if area is None:
+            area = Rectangle.entire_map(self.world)
+        xmin, xmax, ymin, ymax = area.bounds()
+
         for era in self.date_ranges:
             fig, ax, colour_map = _init_world_plot()
 
-            plot_data = self.data[era]
+            plot_data = self.data[era][xmin:xmax, ymin:ymax]
 
             if blur:
                 plot_data = ndimage.gaussian_filter(plot_data, sigma=blur)
@@ -250,7 +288,9 @@ class CorrelateBase(object):
 
             # Create rgb data
             plot_data = colour_map(plot_data)
-            plot_data = _colour_special_tiles(plot_data, self.world)
+            plot_data = _colour_special_tiles(plot_data, self.world, area=area)
+            if highlight:
+                plot_data = _highlight(plot_data, area, highlight)
 
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmax=vmax,
                            vmin=0)
@@ -259,47 +299,72 @@ class CorrelateBase(object):
 
     # Perform a linear regression of the accumaltors date against the
     # correlators data and plot the result
-    def correlate(self, accumulator, blur=False, cumulative=False):
+    def correlate(self, accumulator, blur=False, cumulative=False, area=None,
+                  exclude=None, log_log=False):
         assert self.world is accumulator.world
         common_eras = [era for era in self.date_ranges
                        if era in accumulator.date_ranges]
 
-        if cumulative:
-            cumulative_sum = np.zeros([self.world.xdim, self.world.ydim])
+        if area is None:
+            area = Rectangle.entire_map(self.world)
+        xmin, xmax, ymin, ymax = area.bounds()
+        xdim = xmax - xmin
+        ydim = ymax - ymin
 
-        # Figure and axes
-        fig, ax = plt.subplots()
+        if cumulative:
+            cumulative_sum = np.zeros([xdim, ydim])
+
+        sea_tiles = []
+        for tile in self.world.tiles:
+            if tile.terrain == terrain.sea:
+                x, y = tile.position[0], tile.position[1]
+                if area.in_area(x, y):
+                    sea_tiles.append((x-xmin, y-ymin))
+
         # Correlate population and imperial density between eras in both
         # cities data and imperial denisty
         for era in common_eras:
+            # Figure and axes
+            fig, ax = plt.subplots()
             # Axes setup
             ax.set_xlabel(accumulator._label)
             ax.set_ylabel(self._label)
             ax.set_title(str(era))
 
-            comparison = accumulator.data[era]
+            comparison = accumulator.data[era][xmin:xmax, ymin:ymax]
             if cumulative:
                 comparison += cumulative_sum
                 cumulative_sum = comparison
-            data = self.data[era]
+            data = self.data[era][xmin:xmax, ymin:ymax]
 
             if blur:
                 data = ndimage.gaussian_filter(data, sigma=blur)
 
             # Don't compare sea tiles
-            for tile in self.world.tiles:
-                if tile.terrain == terrain.sea:
-                    x, y = tile.position[0], tile.position[1]
+            for x, y in sea_tiles:
+                comparison[x, y] = self._REMOVE_FLAG
+                data[x, y] = self._REMOVE_FLAG
+
+            # Don't compare excluded tiles
+            if exclude:
+                for x, y in exclude.all_tiles:
                     comparison[x, y] = self._REMOVE_FLAG
                     data[x, y] = self._REMOVE_FLAG
 
             comparison = comparison.flatten()
             data = data.flatten()
 
-            if blur is False:
-                # Only compare tiles with data
+            # if blur is False:
+            #     # Only compare tiles with data
+            #     for index in range(len(comparison)):
+            #         if data[index] == 0:
+            #             comparison[index] = self._REMOVE_FLAG
+            #             data[index] = self._REMOVE_FLAG
+
+            if log_log is True:
+                # Remove any tiles with value 0
                 for index in range(len(comparison)):
-                    if data[index] == 0:
+                    if data[index] == 0 or comparison[index] == 0:
                         comparison[index] = self._REMOVE_FLAG
                         data[index] = self._REMOVE_FLAG
 
@@ -308,6 +373,11 @@ class CorrelateBase(object):
                                    if elem != self._REMOVE_FLAG])
             data = np.array([elem for elem in data
                              if elem != self._REMOVE_FLAG])
+
+            # Take logarithmns if requested
+            if log_log is True:
+                comparison = np.log(comparison)
+                data = np.log(data)
 
             # Linear regression
             linreg = stats.linregress(comparison, data)
@@ -320,7 +390,6 @@ class CorrelateBase(object):
             fig.tight_layout()
             fig.savefig('{}_{}_correlation_{}.pdf'.format(
                 self._prefix, accumulator._prefix, era), format='pdf')
-            ax.cla()
 
 
 # Population corralatable class
@@ -364,3 +433,19 @@ class Battles(CorrelateBase):
                 for era in self.date_ranges:
                     if era.is_within(battle['year']):
                         self.data[era][battle['x'], battle['y']] += 1.
+
+
+# Historical imperial density correlatble class
+class HistoricalImperialDensity(CorrelateBase):
+    _label = 'historical imperial density'
+    _prefix = 'imperial_density'
+
+    def __init__(self, world, data_file):
+        # Use the date ranges from Turchin et al.
+        super().__init__(world, date_ranges=imperial_density_date_ranges)
+
+        with open(data_file, 'rb') as picklefile:
+            impd = pickle.load(picklefile)
+
+        for era, imperial_density in impd.items():
+            self.data[era] = imperial_density
