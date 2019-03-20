@@ -57,6 +57,20 @@ def _colour_special_tiles(rgba_data, world, highlight_desert=False,
     return rgba_data
 
 
+# Highlight tiles in an area
+def _highlight(rgba_data, area, highlight):
+    xmin, xmax, ymin, ymax = area.bounds()
+    for x, y in highlight.all_tiles:
+        if area.in_area(x, y):
+            x -= xmin
+            y -= ymin
+            rgba_data[x][y] += np.array([0.3, 0.0, 0.3, 0.0])
+            rgba_data[x][y] = np.array(
+                [min(value, 1.0) for value in rgba_data[x][y]]
+                )
+    return rgba_data
+
+
 # Plot a heatmap of military technology level
 def plot_military_techs(world, highlight_desert=False, highlight_steppe=False):
     fig, ax, colour_map = _init_world_plot()
@@ -253,7 +267,7 @@ class CorrelateBase(object):
                      for era in date_ranges}
 
     # Draw a heatmap of the data projected onto the map
-    def plot_heatmap(self, blur=False, area=None):
+    def plot_heatmap(self, blur=False, area=None, highlight=None):
         if area is None:
             area = Rectangle.entire_map(self.world)
         xmin, xmax, ymin, ymax = area.bounds()
@@ -272,6 +286,8 @@ class CorrelateBase(object):
             # Create rgb data
             plot_data = colour_map(plot_data)
             plot_data = _colour_special_tiles(plot_data, self.world, area=area)
+            if highlight:
+                plot_data = _highlight(plot_data, area, highlight)
 
             im = ax.imshow(np.rot90(plot_data), cmap=colour_map, vmax=vmax,
                            vmin=0)
@@ -280,7 +296,8 @@ class CorrelateBase(object):
 
     # Perform a linear regression of the accumaltors date against the
     # correlators data and plot the result
-    def correlate(self, accumulator, blur=False, cumulative=False, area=None):
+    def correlate(self, accumulator, blur=False, cumulative=False, area=None,
+                  exclude=None):
         assert self.world is accumulator.world
         common_eras = [era for era in self.date_ranges
                        if era in accumulator.date_ranges]
@@ -324,6 +341,12 @@ class CorrelateBase(object):
             for x, y in sea_tiles:
                 comparison[x, y] = self._REMOVE_FLAG
                 data[x, y] = self._REMOVE_FLAG
+
+            # Don't compare excluded tiles
+            if exclude:
+                for x, y in exclude.all_tiles:
+                    comparison[x, y] = self._REMOVE_FLAG
+                    data[x, y] = self._REMOVE_FLAG
 
             comparison = comparison.flatten()
             data = data.flatten()
