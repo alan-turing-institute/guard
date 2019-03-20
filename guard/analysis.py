@@ -354,12 +354,12 @@ class CorrelateBase(object):
             comparison = comparison.flatten()
             data = data.flatten()
 
-            if blur is False:
-                # Only compare tiles with data
-                for index in range(len(comparison)):
-                    if data[index] == 0:
-                        comparison[index] = self._REMOVE_FLAG
-                        data[index] = self._REMOVE_FLAG
+            # if blur is False:
+            #     # Only compare tiles with data
+            #     for index in range(len(comparison)):
+            #         if data[index] == 0:
+            #             comparison[index] = self._REMOVE_FLAG
+            #             data[index] = self._REMOVE_FLAG
 
             if log_log is True:
                 # Remove any tiles with value 0
@@ -433,3 +433,19 @@ class Battles(CorrelateBase):
                 for era in self.date_ranges:
                     if era.is_within(battle['year']):
                         self.data[era][battle['x'], battle['y']] += 1.
+
+
+# Historical imperial density correlatble class
+class HistoricalImperialDensity(CorrelateBase):
+    _label = 'historical imperial density'
+    _prefix = 'imperial_density'
+
+    def __init__(self, world, data_file):
+        # Use the date ranges from Turchin et al.
+        super().__init__(world, date_ranges=imperial_density_date_ranges)
+
+        with open(data_file, 'rb') as picklefile:
+            impd = pickle.load(picklefile)
+
+        for era, imperial_density in impd.items():
+            self.data[era] = imperial_density
