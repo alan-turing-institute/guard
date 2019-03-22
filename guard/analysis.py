@@ -531,3 +531,16 @@ class CompareEmpireShape(object):
             ax[1].hist(polity_sizes, bins=bins, weights=polity_sizes)
             fig.tight_layout()
             fig.savefig('{}_{}.pdf'.format(self.name, year))
+
+    def dump(self, outfile):
+        with open(outfile, 'wb') as picklefile:
+            pickle.dump(self.n_polities, picklefile)
+            pickle.dump(self.polity_sizes, picklefile)
+
+    @classmethod
+    def from_file(cls, world, data_file, years, infile):
+        compare = cls(world, data_file, years)
+        with open(infile, 'rb') as picklefile:
+            compare.n_polities = pickle.load(picklefile)
+            compare.polity_sizes = pickle.load(picklefile)
+        return compare
