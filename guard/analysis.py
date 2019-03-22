@@ -237,9 +237,6 @@ class ImperialDensity(AccumulatorBase):
                     self.data[era][tile.position[0], tile.position[1]] += 1.
                     self.samples[era] += 1
 
-    def min_max(self, data, era):
-        return 0, np.max(self.data[era])
-
 
 # Enumerate and analyse attack frequency in each tile
 class AttackEvents(AccumulatorBase):
@@ -449,3 +446,101 @@ class HistoricalImperialDensity(CorrelateBase):
 
         for era, imperial_density in impd.items():
             self.data[era] = imperial_density
+
+
+class CompareEmpireShape(object):
+    def __init__(self, world, data_file, years):
+        self.world = world
+        self.years = years
+
+        with open(data_file, 'r') as infile:
+            empire_dict = yaml.load(infile)
+
+        self.name = empire_dict['empire']
+        self.occupied = {}
+        self.n_polities = {}
+        self.polity_sizes = {}
+
+        for year in self.years:
+            self.occupied[year] = []
+            # Copy occupied tiles from empire definition
+            for occupied in empire_dict[year]:
+                self.occupied[year].append((occupied['x'], occupied['y']))
+
+    def sample(self):
+        # Convert year from number to string (i.e. -1200 to 1200BC)
+        year = self.world.year()
+        if year < 0:
+            year = str(year)[1:] + 'BC'
+        elif year == 0:
+            year = '0'
+        elif year > 0:
+            year = str(year) + 'AD'
+        # Only sample when we are at a valid year
+        if year not in self.years:
+            return
+
+        # retrieve list of occupied tile coordinates
+        occupied = self.occupied[year]
+
+        # Sum the number of polities in the historical extent of the empire,
+        # and their sizes
+        included_polities = []
+        n_polities = 0
+        polity_sizes = []
+        for coordinates in occupied:
+            tile = self.world.index(coordinates[0], coordinates[1])
+            # Skip desert tiles included in the extent of the empire
+            if not tile.terrain.polity_forming:
+                continue
+            polity = tile.polity
+            # Ensure polities are not doubly counted if they possess more than
+            # one community in the extent of the empire
+            if polity in included_polities:
+                continue
+            included_polities.append(polity)
+            n_polities += 1
+            polity_sizes.append(polity.size())
+
+        self.n_polities[year] = n_polities
+        self.polity_sizes[year] = polity_sizes
+
+    def plot_histograms(self):
+        for year in self.years:
+            # Don't produce a histogram if there are no polities or the
+            # empire did not exist at this century
+            if self.n_polities[year] == 0:
+                continue
+            elif self.occupied[year] == []:
+                continue
+
+            # Initialise figure and axis
+            fig = plt.figure()
+            ax = fig.subplots(1, 2)
+
+            polity_sizes = self.polity_sizes[year]
+            bins = max(polity_sizes)
+
+            ax[0].set_title('Polities of size N')
+            ax[0].set_ylabel('number of polities')
+            ax[0].set_xlabel('size of polity / cells')
+            ax[0].hist(polity_sizes, bins=bins)
+            ax[1].set_title('Number of cells in\npolities of size N')
+            ax[1].set_ylabel('number of cells')
+            ax[1].set_xlabel('size of polity / cells')
+            ax[1].hist(polity_sizes, bins=bins, weights=polity_sizes)
+            fig.tight_layout()
+            fig.savefig('{}_{}.pdf'.format(self.name, year))
+
+    def dump(self, outfile):
+        with open(outfile, 'wb') as picklefile:
+            pickle.dump(self.n_polities, picklefile)
+            pickle.dump(self.polity_sizes, picklefile)
+
+    @classmethod
+    def from_file(cls, world, data_file, years, infile):
+        compare = cls(world, data_file, years)
+        with open(infile, 'rb') as picklefile:
+            compare.n_polities = pickle.load(picklefile)
+            compare.polity_sizes = pickle.load(picklefile)
+        return compare
