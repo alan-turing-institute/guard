@@ -1,20 +1,18 @@
 # guard [![Build Status](https://travis-ci.com/alan-turing-institute/guard.svg?token=QpRTp1bT17BnXV9jtJ6H&branch=master)](https://travis-ci.com/alan-turing-institute/guard)
 
+This repository contains code and data to reproduce results from Madge et al. 2019. "Simulating Imperial Dynamics and Conflict in the Ancient World". https://arxiv.org/abs/1903.11729, which expands upon Turchin et al. 2013. "War, space, and the evolution of Old World complex societies". https://doi.org/10.1073/pnas.1308825110.
 
-An agent-based model for the evolution of large scale empires in the historical
-world, based on [the work of Peter
-Turchin](https://doi.org/10.1073/pnas.1308825110).
-
-An analysis of simulation results and the models ability to predict empires,
-population and battles are presented in [our
-publication](https://arxiv.org/abs/1903.11729).
-
-This work is part of the project [GUARD: Global Urban Analytics for Resilient Defence](https://www.turing.ac.uk/research/research-projects/global-urban-analytics-resilient-defence)
+This work is part of the project [GUARD: Global Urban Analytics for Resilient Defence](https://www.turing.ac.uk/research/research-projects/global-urban-analytics-resilient-defence).
 
 ## Data
 
 The data used to generate figures in the publication are located in the 'data'
 directory.
+
+We use three datasets:
+1. Historical imperial density data from Turchin et al. 2013. "War, space, and the evolution of Old World complex societies". https://doi.org/10.1073/pnas.1308825110 and Bennett, James. 2016. "Repeated Demographic-Structural Crises Propel the Spread of Large-Scale Agrarian States Throughout the Old World." Cliodynamics: The Journal of Quantitative History and Cultural Evolution 7 (1). https://doi.org/10.21237/C7CLIO7128530.
+2. Pupulation data from Reba, Meredith, Femke Reitsma, and Karen C. Seto. 2016. "Spatializing 6,000 Years of Global Urbanization from 3700 BC to AD 2000." Scientific Data 3 (June): 160034. https://doi.org/10.1038/sdata.2016.34.
+3. Conflict data from NodeGoat (February 2016): https://nodegoat.net/blog.p/82.m/14/a-wikidatadbpedia-geography-of-violence.
 
 ## Examples
 
@@ -36,7 +34,7 @@ be run with the command `python -m pytest`.
 
 ## Citation
 
-Please cite as: ``Madge, Jim, Giovanni Colavizza, James Hetherington, Weisi Guo, and Alan Wilson. 2019. "Simulating Imperial Dynamics and Conflict in the Ancient World". https://arxiv.org/abs/1903.11729.``
+Please cite as: Madge, Jim, Giovanni Colavizza, James Hetherington, Weisi Guo, and Alan Wilson. 2019. "Simulating Imperial Dynamics and Conflict in the Ancient World". https://arxiv.org/abs/1903.11729.
 
     @article{madge_simulating_2019,
       title = {Simulating {Imperial} {Dynamics} and {Conflict} in the {Ancient} {World}},
