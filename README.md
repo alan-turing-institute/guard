@@ -12,7 +12,7 @@ directory.
 We use three datasets:
 1. Historical imperial density data from Turchin et al. 2013. "War, space, and the evolution of Old World complex societies". https://doi.org/10.1073/pnas.1308825110 and Bennett, James. 2016. "Repeated Demographic-Structural Crises Propel the Spread of Large-Scale Agrarian States Throughout the Old World." Cliodynamics: The Journal of Quantitative History and Cultural Evolution 7 (1). https://doi.org/10.21237/C7CLIO7128530.
 2. Pupulation data from Reba, Meredith, Femke Reitsma, and Karen C. Seto. 2016. "Spatializing 6,000 Years of Global Urbanization from 3700 BC to AD 2000." Scientific Data 3 (June): 160034. https://doi.org/10.1038/sdata.2016.34.
-3. Conflict data from NodeGoat (February 2016): https://nodegoat.net/blog.p/82.m/14/a-wikidatadbpedia-geography-of-violence.
+3. Conflict data from nodegoat (February 2016): https://nodegoat.net/blog.p/82.m/14/a-wikidatadbpedia-geography-of-violence.
 
 ## Examples
 
