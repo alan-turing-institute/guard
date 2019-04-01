@@ -3,7 +3,7 @@ GUARD: Global Urban Analytics for Resilient Defence
 
 An agent-based model for the evolution of large scale empires in the historical
 world, based on [the work of Peter
-Turchin](https://www.pnas.org/content/early/2013/09/20/1308825110).
+Turchin](https://doi.org/10.1073/pnas.1308825110).
 
 An analysis of simulation results and the models ability to predict empires,
 population and battles are presented in [our
