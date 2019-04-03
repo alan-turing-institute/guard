@@ -5,9 +5,8 @@ import os
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
-def test_imperial_density_summation(generate_world):
-    map_ = world.World(from_file=project_dir
-                       + '/test/data/test_map_5x5.yml')
+def test_imperial_density_summation(world_5x5):
+    map_ = world_5x5
     date_range = analysis.DateRange(-1500, 1500)
     imperial_density = analysis.ImperialDensity(map_, date_ranges=[date_range])
 

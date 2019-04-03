@@ -2,7 +2,7 @@ import pytest
 from guard import parameters, world, terrain
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def default_parameters():
     return parameters.defaults
 
@@ -12,6 +12,13 @@ def custom_parameters():
     def _custom_parameters(**kwargs):
         return parameters.generate(**kwargs)
     return _custom_parameters
+
+
+@pytest.fixture(scope='class')
+def world_5x5(default_parameters):
+    map_ = world.World(5, 5, params=default_parameters)
+    map_.create_flat_agricultural_world()
+    return map_
 
 
 @pytest.fixture
