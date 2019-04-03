@@ -32,32 +32,6 @@ def test_imperial_density_summation(world_5x5):
     assert np.all(imperial_density.data[date_range] == 2.0*test_density)
 
 
-class TestDateRange(object):
-    def test_label(self):
-        date_range = analysis.DateRange(-5, 5)
-
-        assert str(date_range) == '5BC-5AD'
-
-    def test_equivalence(self):
-        date_range = analysis.DateRange(-5, 5)
-        date_range2 = analysis.DateRange(-5, 5)
-
-        assert date_range == date_range2
-        assert date_range == '5BC-5AD'
-
-    def test_hash(self):
-        date_range = analysis.DateRange(0, 500)
-        test_dict = {date_range: 'test'}
-
-        assert test_dict['0-500AD'] == 'test'
-
-    def test_from_string(self):
-        date_range_1 = analysis.DateRange(-500, 200)
-        date_range_2 = analysis.DateRange.from_string('500BC-200AD')
-
-        assert date_range_1 == date_range_2
-
-
 def test_population_data(generate_world):
     map_ = world.World(
         from_file=project_dir + '/test/data/test_map_5x5.yml'
