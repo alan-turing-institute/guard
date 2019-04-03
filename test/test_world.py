@@ -290,6 +290,17 @@ def test_community_activation(generate_world):
         ) == 3
 
 
+def test_reset(generate_world):
+    map_ = generate_world(5, 5)
+
+    assert map_.number_of_polities() == 25
+    map_.polities[0].transfer_community(map_.tiles[-1])
+    map_.prune_empty_polities()
+    assert map_.number_of_polities() == 24
+    map_.reset()
+    assert map_.number_of_polities() == 25
+
+
 def test_yaml_parsing():
     map_ = world.World(from_file=project_dir+'/data/old_world.yml')
 
