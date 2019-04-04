@@ -1,13 +1,13 @@
 from guard import world, analysis
 import numpy as np
 import os
+import pytest
 
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
-def test_imperial_density_summation(generate_world):
-    map_ = world.World(from_file=project_dir
-                       + '/test/data/test_map_5x5.yml')
+def test_imperial_density_summation(world_5x5):
+    map_ = world_5x5
     date_range = analysis.DateRange(-1500, 1500)
     imperial_density = analysis.ImperialDensity(map_, date_ranges=[date_range])
 
@@ -33,32 +33,6 @@ def test_imperial_density_summation(generate_world):
     assert np.all(imperial_density.data[date_range] == 2.0*test_density)
 
 
-class TestDateRange(object):
-    def test_label(self):
-        date_range = analysis.DateRange(-5, 5)
-
-        assert str(date_range) == '5BC-5AD'
-
-    def test_equivalence(self):
-        date_range = analysis.DateRange(-5, 5)
-        date_range2 = analysis.DateRange(-5, 5)
-
-        assert date_range == date_range2
-        assert date_range == '5BC-5AD'
-
-    def test_hash(self):
-        date_range = analysis.DateRange(0, 500)
-        test_dict = {date_range: 'test'}
-
-        assert test_dict['0-500AD'] == 'test'
-
-    def test_from_string(self):
-        date_range_1 = analysis.DateRange(-500, 200)
-        date_range_2 = analysis.DateRange.from_string('500BC-200AD')
-
-        assert date_range_1 == date_range_2
-
-
 def test_population_data(generate_world):
     map_ = world.World(
         from_file=project_dir + '/test/data/test_map_5x5.yml'
@@ -70,3 +44,25 @@ def test_population_data(generate_world):
     assert cities.data['0-500AD'][0, 0] == 42000
     assert cities.data['1000BC-0'][0, 0] == 42000
     assert cities.data['1400AD-1500AD'][2, 4] == 400000
+
+
+@pytest.mark.parametrize('accumulator_class', [analysis.AccumulatorBase,
+                                               analysis.ImperialDensity,
+                                               analysis.AttackEvents])
+def test_mean_accumulator(world_5x5, daterange_0_100AD, accumulator_class):
+    # Create a set of accumulators and populate with random data
+    accumulators = [
+        accumulator_class(world_5x5, [daterange_0_100AD])
+        for i in range(5)
+        ]
+
+    # Determine the mean
+    mean_data = np.zeros([5, 5])
+    for accumulator in accumulators:
+        data = np.random.random([5, 5])
+        accumulator.data[daterange_0_100AD] = data
+        mean_data += data
+    mean_data = mean_data / 5.
+
+    mean = analysis.AccumulatorBase.mean(accumulators)
+    assert np.all(mean.data[daterange_0_100AD] == mean_data)

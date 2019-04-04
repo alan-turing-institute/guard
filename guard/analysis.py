@@ -164,6 +164,19 @@ class AccumulatorBase(object):
             accumulator.data = data
         return accumulator
 
+    @classmethod
+    def mean(cls, accumulators):
+        mean_accumulator = cls(accumulators[0].world,
+                               accumulators[0].date_ranges)
+
+        total = len(accumulators)
+        for era in mean_accumulator.date_ranges:
+            data = sum([accumulator.data[era] for accumulator in accumulators])
+            data = data / total
+            mean_accumulator.data[era] = data
+
+        return mean_accumulator
+
     def sample(self):
         pass
 

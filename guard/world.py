@@ -172,6 +172,12 @@ class World(object):
         self.set_littoral_neighbours()
 
         # Each agricultural tile is its own polity
+        self.reset()
+
+    # Reset the world by returning all polities to single communities and
+    # setting the step number to 0
+    def reset(self):
+        self.step_number = 0
         self.polities = [polity.Polity([tile])
                          for tile in self.tiles if tile.terrain.polity_forming]
 
