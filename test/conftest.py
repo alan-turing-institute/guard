@@ -1,5 +1,5 @@
 import pytest
-from guard import parameters, world, terrain
+from guard import parameters, world, terrain, daterange
 
 
 @pytest.fixture(scope='session')
@@ -19,6 +19,25 @@ def world_5x5(default_parameters):
     map_ = world.World(5, 5, params=default_parameters)
     map_.create_flat_agricultural_world()
     return map_
+
+
+@pytest.fixture(scope='session')
+def daterange_0_100AD():
+    return daterange.DateRange(0, 100)
+
+
+@pytest.fixture(scope='session')
+def dateranges_5_centuries():
+    return [
+        daterange.DateRange(start_year, end_year)
+        for (start_year, end_year) in [
+            (0, 100),
+            (100, 200),
+            (200, 300),
+            (300, 400),
+            (400, 500)
+            ]
+        ]
 
 
 @pytest.fixture

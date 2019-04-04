@@ -1,6 +1,7 @@
 from guard import world, analysis
 import numpy as np
 import os
+import pytest
 
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -43,3 +44,25 @@ def test_population_data(generate_world):
     assert cities.data['0-500AD'][0, 0] == 42000
     assert cities.data['1000BC-0'][0, 0] == 42000
     assert cities.data['1400AD-1500AD'][2, 4] == 400000
+
+
+@pytest.mark.parametrize('accumulator_class', [analysis.AccumulatorBase,
+                                               analysis.ImperialDensity,
+                                               analysis.AttackEvents])
+def test_mean_accumulator(world_5x5, daterange_0_100AD, accumulator_class):
+    # Create a set of accumulators and populate with random data
+    accumulators = [
+        accumulator_class(world_5x5, [daterange_0_100AD])
+        for i in range(5)
+        ]
+
+    # Determine the mean
+    mean_data = np.zeros([5, 5])
+    for accumulator in accumulators:
+        data = np.random.random([5, 5])
+        accumulator.data[daterange_0_100AD] = data
+        mean_data += data
+    mean_data = mean_data / 5.
+
+    mean = analysis.AccumulatorBase.mean(accumulators)
+    assert np.all(mean.data[daterange_0_100AD] == mean_data)
