@@ -1,15 +1,53 @@
+"""
+Community class.
+"""
 from . import terrain, period
 from collections import namedtuple
 from numpy.random import random, randint, choice
 
+"""
+Names of the four cardinal directions
+"""
 DIRECTIONS = ('left', 'right', 'up', 'down')
 
-# Littoral neighbour named tuple
+"""
+Littoral neighbour named tuple
+"""
 LittoralNeighbour = namedtuple('LittoralNeighbour', ['neighbour', 'distance'])
 
 
-# Community (tile) class
 class Community(object):
+    """
+    A community (tile, cell) on the simulation map.
+
+    Args:
+        params (Parameters): The set of simulation parameters to use.
+        landscape (Terrain, default terrain.agriculture): The terrain of the
+            community. The default is agriculutural land.
+        elevation (int, default=0): The elevation of the community in metres.
+        active_from (Period, default=period.agri1): The period at which the
+            community first becomes agricultural. This is only important for
+            communities with the terrain.agriculture terain. The default is
+            period.agri, which means the community is agriculturally active
+            from the begining of the simulation.
+
+    Attributes:
+        terrain (Terrain): The terrain of the community.
+        elevation (int): The communities elevation in metres.
+        ultrasocietal_traits (list[bool]): A vector of which ultrasocietal
+            traits the community possesses.
+        military_techs (list[bool]): A vector of which military technologies
+            the community possesses.
+        position (tuple[int,int]): The position of the community on its map in
+            the format (x,y).
+        neighbours (dict): The communities neighbours in the four cardinal
+            directions.
+        littoral (bool): True if the community is littoral, False otherwise.
+        littoral_neighbours (list[LittoralNeighbour]): A list of all of the
+            communities littoral neighbours as LittoralNeighbour named tuples.
+        polity (Polity): The polity to which the community belongs.
+
+    """
     def __init__(self, params, landscape=terrain.agriculture, elevation=0,
                  active_from=period.agri1):
         self.terrain = landscape
@@ -41,49 +79,117 @@ class Community(object):
 
         return string
 
-    # Total number of ultrasocietal traits
     def total_ultrasocietal_traits(self):
+        """
+        Total number of ultrasocietal traits.
+
+        Returns:
+            (int): The total number of ultrasocietal traits.
+        """
         return sum(self.ultrasocietal_traits)
 
-    # Total number of military techs
     def total_military_techs(self):
+        """
+        Total number of military technologies.
+
+        Returns:
+            (int): The total number of military technologies.
+        """
         return sum(self.military_techs)
 
-    # Determine if community is active (in a currently agricultural region)
     def is_active(self, step_number):
+        """
+        Determine if community is active (in a currently agricultural region).
+
+        Args:
+            step_number (int): The current step number.
+
+        Returns:
+            (bool): True if the community is active, False otherwise.
+        """
         return self.period.is_active(step_number)
 
-    # Determine if the community can attack
     def can_attack(self, step_number):
+        """
+        Determine if the community can attack.
+
+        Args:
+            step_number (int): The current step number.
+
+        Returns:
+            (bool): True if the community may attack, False otherwise.
+        """
         if self.terrain.polity_forming:
             if self.is_active(step_number):
                 return True
         return False
 
-    # Assign community to a polity
     def assign_to_polity(self, polity):
+        """
+        Assign community to a polity
+
+        Args:
+            polity (Polity): The polity to assign the community to.
+        """
         self.polity = polity
 
-    # Filter the littoral neighbours list to only include neighbours within
-    # a given distance
     def littoral_neighbours_in_range(self, distance):
+        """
+        Filter the littoral neighbours list to only include neighbours within a
+        given distance.
+
+        Args:
+            distance (float): The threshold distance.
+
+        Returns:
+            (list[LittoralNeighbour]): A list of all littoral neighours within
+                range.
+        """
         return [neighbour for neighbour in self.littoral_neighbours
                 if neighbour.distance <= distance]
 
-    # Determine the power of an attack from this community (equal to
-    # the polities attack power)
     def attack_power(self, params):
+        """
+        Determine the power of an attack from this community (equal to the
+        polities attack power).
+
+        Args:
+            params (Parameters): The simulation parameter set.
+
+        Returns:
+            (float): The attack power.
+        """
         return self.polity.attack_power(params)
 
-    # Determine the power of this community in defending
     def defence_power(self, params, sea_attack):
+        """
+        Determine the power of this community in defending.
+
+        Args:
+            params (Parameters): The simulation parameter set.
+            sea_attack (bool): Whether the attack is made by sea.
+
+        Returns:
+            (float): The defence power.
+        """
         power = self.polity.attack_power(params)
         if not sea_attack:
             power += params.elevation_defence_coefficient * self.elevation
         return power
 
-    # Determine the probability of a successful attack
     def success_probability(self, target, params, sea_attack):
+        """
+        Determine the probability of a success of an attack from this community
+        to a target.
+
+        Args:
+            target (Community): The community to attack.
+            params (Parameters): The simulation parameter set.
+            sea_attack (bool): Whether the attack is made by sea.
+
+        Return:
+            (float): The probability of success.
+        """
         power_attacker = self.attack_power(params)
         power_defender = target.defence_power(params, sea_attack)
 
@@ -97,8 +203,17 @@ class Community(object):
 
         return success
 
-    # Determine the probability of ethnocide
     def ethnocide_probability(self, target, params):
+        """
+        Determine the probability of ethnocide.
+
+        Args:
+            target (Community): The community under attack.
+            params (Parameters): The simulation parameter set.
+
+        Return:
+            (float): The probability of ethnocide.
+        """
         probability = params.ethnocide_min
         probability += (
             (params.ethnocide_max - params.ethnocide_min) *
@@ -115,8 +230,17 @@ class Community(object):
 
         return probability
 
-    # Conduct an attack
     def attack(self, target, params, sea_attack, probability=None):
+        """
+        Conduct an attack.
+
+        Args:
+            target (Community): The community to attack.
+            params (Parameters): The simulation parameter set.
+            sea_attack (bool): Whether the attack is made by sea.
+            probability (float, default=None): Manually set the success
+                probability. If None this has no effect. Used for testing.
+        """
         if probability is None:
             probability = self.success_probability(target, params, sea_attack)
         # Determine whether attack was successful
@@ -128,9 +252,20 @@ class Community(object):
             if self.ethnocide_probability(target, params) > random():
                 target.ultrasocietal_traits[:] = self.ultrasocietal_traits
 
-    # Attempt to attack a random neighbour
     def attempt_attack(self, params, step_number, sea_attack_distance,
                        callback=None):
+        """
+        Attempt to attack a random neighbour.
+
+        Args:
+            params (Parameters): The simulation parameter set.
+            step_number (int): The current simulation step.
+            sea_attack_distance (float): The maximum distance for a sea attack
+                at this step.
+            callback (function, default=None): A callback function to be
+                invoked when a successful attack is made. Currently used to
+                collect attack frequency.
+        """
         direction = choice(DIRECTIONS)
         target = self.neighbours[direction]
 
@@ -172,8 +307,13 @@ class Community(object):
         # attack proceeded or was successful
         self.diffuse_military_tech(target, params)
 
-    # Local cultural shift (mutation of ultrasocietal traits vector)
     def cultural_shift(self, params):
+        """
+        Local cultural shift (mutation of ultrasocietal traits vector).
+
+        Args:
+            params (Parameters): The simulation parameter set.
+        """
         for index, trait in enumerate(self.ultrasocietal_traits):
             if trait is False:
                 # Chance to develop an ultrasocietal trait
@@ -184,8 +324,15 @@ class Community(object):
                 if params.mutation_from_ultrasocietal > random():
                     self.ultrasocietal_traits[index] = False
 
-    # Attempt to spread military technology
     def diffuse_military_tech(self, target, params):
+        """
+        Attempt to spread military technology.
+
+        Args:
+            target (Community): The community to attempt to spread technology
+                to.
+            params (Parameters): The simulation parameter set.
+        """
         # Select a tech to share
         selected_tech = randint(params.n_military_techs)
         if self.military_techs[selected_tech] is True:

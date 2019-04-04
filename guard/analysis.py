@@ -1,3 +1,7 @@
+"""
+Classes and routines for analysis of simulations.
+"""
+
 from . import terrain
 from .area import Rectangle
 from .daterange import (DateRange, InvalidDateRange,
@@ -18,8 +22,10 @@ _DESERT = np.array([0.7372549, 0.71372549, 0.25098039, 1.])
 _STEPPE = np.array([0.42745098, 0., 0.75686275, 1.])
 
 
-# Establish the figure, axis and colourmap for a standard map plot
 def _init_world_plot():
+    """
+    Establish the figure, axis and colourmap for a standard map plot
+    """
     # Initialise figure and axis
     fig = plt.figure()
     ax = fig.subplots()
@@ -34,9 +40,11 @@ def _init_world_plot():
     return fig, ax, colour_map
 
 
-# Colour sea, steppe and desert tiles distinctly
 def _colour_special_tiles(rgba_data, world, highlight_desert=False,
                           highlight_steppe=False, area=None):
+    """
+    Colour sea, steppe and desert tiles distinctly
+    """
     if area is None:
         area = Rectangle.entire_map(world)
     xmin, xmax, ymin, ymax = area.bounds()
@@ -57,8 +65,10 @@ def _colour_special_tiles(rgba_data, world, highlight_desert=False,
     return rgba_data
 
 
-# Highlight tiles in an area
 def _highlight(rgba_data, area, highlight):
+    """
+    Highlight tiles in an area
+    """
     xmin, xmax, ymin, ymax = area.bounds()
     for x, y in highlight.all_tiles:
         if area.in_area(x, y):
@@ -71,9 +81,18 @@ def _highlight(rgba_data, area, highlight):
     return rgba_data
 
 
-# Plot a heatmap of military technology level
 def plot_military_techs(world, highlight_desert=False, highlight_steppe=False):
     fig, ax, colour_map = _init_world_plot()
+    """
+    Plot a heatmap of military technology level.
+
+    Args:
+        world (World): The world object to plot.
+        highligt_desert (bool, default=False): Highlight desert tiles on the
+            map.
+        highligt_steppe (bool, default=False): Highlight steppe tiles on the
+            map.
+    """
 
     # Prepare data
     plot_data = np.array([
@@ -93,9 +112,18 @@ def plot_military_techs(world, highlight_desert=False, highlight_steppe=False):
                 format='pdf')
 
 
-# Plot a heatmap of ultrasocietal traits
 def plot_ultrasocietal_traits(world, highlight_desert=False,
                               highlight_steppe=False):
+    """
+    Plot a heatmap of ultrasocietal trait level.
+
+    Args:
+        world (World): The world object to plot.
+        highligt_desert (bool, default=False): Highlight desert tiles on the
+            map.
+        highligt_steppe (bool, default=False): Highlight steppe tiles on the
+            map.
+    """
     fig, ax, colour_map = _init_world_plot()
 
     # Prepare data
@@ -116,9 +144,18 @@ def plot_ultrasocietal_traits(world, highlight_desert=False,
                 format='pdf')
 
 
-# Plot which regions currently have agriculture
 def plot_active_agriculture(world, highlight_desert=False,
                             highlight_steppe=False):
+    """
+    Plot which regions currently have agriculture.
+
+    Args:
+        world (World): The world object to plot.
+        highligt_desert (bool, default=False): Highlight desert tiles on the
+            map.
+        highligt_steppe (bool, default=False): Highlight steppe tiles on the
+            map.
+    """
     fig, ax, colour_map = _init_world_plot()
 
     # Prepare data
@@ -139,11 +176,24 @@ def plot_active_agriculture(world, highlight_desert=False,
     fig.savefig('active_{:04d}.pdf'.format(world.step_number), format='pdf')
 
 
-# Base class for accumulators of tile wise data
 class AccumulatorBase(object):
+    """
+    Base class for accumulators of tile wise data
+
+    Args:
+        world (World): The world definition.
+        date_ranges (list[DateRange]): The date ranges to accumulate data for.
+            These ranges may overlap.
+
+    Attributes:
+        data (dict): The accumulated data for each of the date ranges
+            specified.  The keys of the dictionary are the date ranges. The
+            values of two dimensional numpy arrays where each element
+            represents the accumulated value in a tile of the map.
+    """
     _prefix = None
 
-    def __init__(self, world, date_ranges=None):
+    def __init__(self, world, date_ranges):
         self.world = world
         self.date_ranges = date_ranges
         self.data = {era: np.zeros([world.xdim, world.ydim])
@@ -151,6 +201,17 @@ class AccumulatorBase(object):
 
     @classmethod
     def from_file(cls, world, data_file):
+        """
+        Reconstruct and accumulator from dumped data.
+
+        Args:
+            world (World): The world definition.
+            data_file (str): Path to the dumped data pickle file.
+
+        Returns:
+            (AccumulatorBase): An accumulator object with the state defined in
+                data_file.
+        """
         date_ranges = []
         data = {}
         with open(data_file, 'rb') as picklefile:
@@ -178,16 +239,56 @@ class AccumulatorBase(object):
         return mean_accumulator
 
     def sample(self):
-        pass
+        """
+        Sample the current state of the world.
+        """
+        raise NotImplementedError
 
     def preprocess(self, data, era):
+        """
+        Preprocess data to be plotted. In this implementation the data is
+        normalised by dividing each point by the maximum value.
+
+        Args:
+            data (numpy Array): A two dimensional numpy array where each
+                element represents a datapoint for a tile on the world map.
+            era (DateRange): The era the data corresponds to.
+
+        Returns:
+            (numpy Array): The processed data.
+        """
         return data / np.max(data)
 
     def min_max(self, data, era):
+        """
+        Determine the minimum and maximum values of the data to use for the
+        colorbar bounds.
+
+        Args:
+            data (numpy Array): A two dimensional numpy array where each
+                element represents a datapoint for a tile on the world map.
+            era (DateRange): The era the data corresponds to.
+
+        Returns:
+            (tuple): A tuple in the form (minimum, maximum).
+        """
         return 0, np.max(data)
 
     def plot_all(self, highlight_desert=False, highlight_steppe=False,
                  area=None, highlight=None):
+        """
+        Produce plots of the accumlated data for all eras.
+
+        Args:
+            highligt_desert (bool, default=False): Highlight desert tiles on
+                the map.
+            highligt_steppe (bool, default=False): Highlight steppe tiles on
+                the map.
+            area (Area, default=None): The area to plot. If None then the
+                entire map is plotted.
+            highlight (Area, default=None): An arbitrary region of the map to
+                highlight.
+        """
         if area is None:
             area = Rectangle.entire_map(self.world)
         for era in self.date_ranges:
@@ -195,6 +296,20 @@ class AccumulatorBase(object):
 
     def plot(self, era, highlight_desert=False, highlight_steppe=False,
              area=None, highlight=None):
+        """
+        Produce a plot of the accumlated data for one era.
+
+        Args:
+            era (DateRange): The era to plot data for.
+            highligt_desert (bool, default=False): Highlight desert tiles on
+                the map.
+            highligt_steppe (bool, default=False): Highlight steppe tiles on
+                the map.
+            area (Area, default=None): The area to plot. If None then the
+                entire map is plotted.
+            highlight (Area, default=None): An arbitrary region of the map to
+                highlight.
+        """
         fig, ax, colour_map = _init_world_plot()
 
         if area is None:
@@ -218,20 +333,40 @@ class AccumulatorBase(object):
         fig.savefig('{}_{}.pdf'.format(self._prefix, era), format='pdf')
 
     def dump(self, outfile):
+        """
+        Write the state of the accumulator to a file in a pickled format.
+
+        Args:
+            outfile (str): path to the file to write.
+        """
         with open(outfile, 'wb') as picklefile:
             pickle.dump(
                 {str(key): value for key, value in self.data.items()},
                 picklefile)
 
 
-# Eumerate imperial density
 class ImperialDensity(AccumulatorBase):
+    """
+    Imperial density accumulator
+
+    Args:
+        world (World): The world definition.
+        date_ranges (list[DateRange], default=imperial_density_date_ranges):
+            The date ranges to accumulate data for. These ranges may overlap.
+            The default are the imperial density eras from Turchin et al.
+            (2013)
+
+    Attributes:
+        data (dict): The accumulated imperial density for each of the date
+            ranges specified.  The keys of the dictionary are the date ranges.
+            The values of two dimensional numpy arrays where each element
+            represents the accumulated value in a tile of the map.
+    """
     _label = 'imperial density'
     _prefix = 'imperial_density'
 
     def __init__(self, world, date_ranges=imperial_density_date_ranges):
         super().__init__(world, date_ranges)
-        self.samples = {era: 0 for era in date_ranges}
 
     def sample(self):
         # Create list of tiles to sample, only tiles with agriculture
@@ -248,15 +383,27 @@ class ImperialDensity(AccumulatorBase):
             if tile.polity.size() > _LARGE_POLITY_THRESHOLD:
                 for era in active_eras:
                     self.data[era][tile.position[0], tile.position[1]] += 1.
-                    self.samples[era] += 1
 
 
-# Enumerate and analyse attack frequency in each tile
 class AttackEvents(AccumulatorBase):
+    """
+    Attacks accumulator
+
+    Args:
+        world (World): The world definition.
+        date_ranges (list[DateRange]): The date ranges to accumulate data for.
+            These ranges may overlap.
+
+    Attributes:
+        data (dict): The accumulated number of attacks for each of the date
+            ranges specified.  The keys of the dictionary are the date ranges.
+            The values of two dimensional numpy arrays where each element
+            represents the accumulated value in a tile of the map.
+    """
     _label = 'attack frequency'
     _prefix = 'attack_frequency'
 
-    def __init__(self, world, date_ranges=None):
+    def __init__(self, world, date_ranges):
         super().__init__(world, date_ranges)
 
     def sample(self, tile):
@@ -266,9 +413,15 @@ class AttackEvents(AccumulatorBase):
             self.data[era][tile.position[0], tile.position[1]] += 1.
 
 
-# Base class for correlated data projected onto the map with tilewise
-# properties
 class CorrelateBase(object):
+    """
+    Base class for correlating data projected onto the map with the data in an
+    accumulator object
+
+    Args:
+        world (World): The world definition.
+        date_ranges (list[DateRange]): The date ranges of the data.
+    """
     _label = None
     _prefix = None
     _REMOVE_FLAG = -5
@@ -279,8 +432,17 @@ class CorrelateBase(object):
         self.data = {era: np.zeros([world.xdim, world.ydim])
                      for era in date_ranges}
 
-    # Draw a heatmap of the data projected onto the map
     def plot_heatmap(self, blur=False, area=None, highlight=None):
+        """
+        Plot a heatmap of the data projected onto the map.
+
+        Args:
+            blur (float, default=False): The radius of Gaussian blur to apply
+                to the data. If False no blur is applied.
+            area (Area, default=None): The area to plot. If None the whole map
+                is plotted.
+            highlight (Area, default=None): An area of the map to highlight.
+        """
         if area is None:
             area = Rectangle.entire_map(self.world)
         xmin, xmax, ymin, ymax = area.bounds()
@@ -307,10 +469,25 @@ class CorrelateBase(object):
             fig.colorbar(im)
             fig.savefig('{}_{}.pdf'.format(self._prefix, era))
 
-    # Perform a linear regression of the accumaltors date against the
-    # correlators data and plot the result
     def correlate(self, accumulator, blur=False, cumulative=False, area=None,
                   exclude=None, log_log=False):
+        """
+        Perform a linear regression of the accumulators date against the
+        correlators data and plot the result.
+
+        Args:
+            accumulator (AccumulatorBase): The accumulator to compare against.
+            blur (float, default=False): The radius of Gaussian blur to apply
+                to the data. If False no blur is applied.
+            cumulative (bool, default=False): Whether to compare against
+                cumulative accumulator data or not.
+            area (Area, default=None): The area to correlate and plot. If None
+                the whole map correlated.
+            exclude (Area, default=None): An area to exclude from the
+                correlation.
+            log_log (bool, default=False): If true correlate the logarithms of
+                the data and accumulator data.
+        """
         assert self.world is accumulator.world
         common_eras = [era for era in self.date_ranges
                        if era in accumulator.date_ranges]
@@ -364,13 +541,6 @@ class CorrelateBase(object):
             comparison = comparison.flatten()
             data = data.flatten()
 
-            # if blur is False:
-            #     # Only compare tiles with data
-            #     for index in range(len(comparison)):
-            #         if data[index] == 0:
-            #             comparison[index] = self._REMOVE_FLAG
-            #             data[index] = self._REMOVE_FLAG
-
             if log_log is True:
                 # Remove any tiles with value 0
                 for index in range(len(comparison)):
@@ -384,7 +554,7 @@ class CorrelateBase(object):
             data = np.array([elem for elem in data
                              if elem != self._REMOVE_FLAG])
 
-            # Take logarithmns if requested
+            # Take logarithms if requested
             if log_log is True:
                 comparison = np.log(comparison)
                 data = np.log(data)
@@ -404,6 +574,15 @@ class CorrelateBase(object):
 
 # Population corralatable class
 class CitiesPopulation(CorrelateBase):
+    """
+    Correlator for historical population data.
+
+    Args:
+        world (World): The world definition.
+        data_file (str): Path to the historical population YAML file.
+        date_ranges (list[DateRange], default=cities_date_ranges): The date
+            ranges of the data.
+    """
     _label = 'population'
     _prefix = 'population'
 
@@ -429,6 +608,15 @@ class CitiesPopulation(CorrelateBase):
 
 # Battles corralatable class
 class Battles(CorrelateBase):
+    """
+    Correlator for historical battles data.
+
+    Args:
+        world (World): The world definition.
+        data_file (str): Path to the historical battles YAML file.
+        date_ranges (list[DateRange]): The date
+            ranges of the data.
+    """
     _label = 'number of battles'
     _prefix = 'battles'
 
@@ -447,6 +635,13 @@ class Battles(CorrelateBase):
 
 # Historical imperial density correlatble class
 class HistoricalImperialDensity(CorrelateBase):
+    """
+    Correlator for historical imperial density.
+
+    Args:
+        world (World): The world definition.
+        data_file (str): Path to the imperial density pickle file.
+    """
     _label = 'historical imperial density'
     _prefix = 'imperial_density'
 
@@ -462,6 +657,18 @@ class HistoricalImperialDensity(CorrelateBase):
 
 
 class CompareEmpireShape(object):
+    """
+    A class for analysing the polities contained within the historical extent
+    of an empire.
+
+    Args:
+        world (World): The world definition.
+        data_file (str): The path to the empire definition YAML file.
+        years (list[str]): The years at which the extend of the empire are
+            defined. These must correspond to keys in the YAML file and are of
+            the format "year era" _e.g._ "100 AD", "300 BC". Year 0 is given by
+            "0".
+    """
     def __init__(self, world, data_file, years):
         self.world = world
         self.years = years
@@ -481,6 +688,9 @@ class CompareEmpireShape(object):
                 self.occupied[year].append((occupied['x'], occupied['y']))
 
     def sample(self):
+        """
+        Sample the polities within a historical empires extent.
+        """
         # Convert year from number to string (i.e. -1200 to 1200BC)
         year = self.world.year()
         if year < 0:
@@ -519,6 +729,10 @@ class CompareEmpireShape(object):
         self.polity_sizes[year] = polity_sizes
 
     def plot_histograms(self):
+        """
+        Plot histograms of the number of polities of each size, and the number
+        of communities in polities of each size.
+        """
         for year in self.years:
             # Don't produce a histogram if there are no polities or the
             # empire did not exist at this century
@@ -546,12 +760,35 @@ class CompareEmpireShape(object):
             fig.savefig('{}_{}.pdf'.format(self.name, year))
 
     def dump(self, outfile):
+        """
+        Dump the data of the object to a pickle file.
+
+        Args:
+            outfile (str): Path to the pickle file to create.
+        """
         with open(outfile, 'wb') as picklefile:
             pickle.dump(self.n_polities, picklefile)
             pickle.dump(self.polity_sizes, picklefile)
 
     @classmethod
     def from_file(cls, world, data_file, years, infile):
+        """
+        Reconstruct a CompareEmpireShape object previously dumped to a pickle
+        file.
+
+        Args:
+            world (World): The world definition.
+            data_file (str): The path to the empire definition YAML file.
+            years (list[str]): The years at which the extend of the empire are
+                defined. These must correspond to keys in the YAML file and are
+                of the format "year era" _e.g._ "100 AD", "300 BC". Year 0 is
+                given by "0".
+            infile (str): Path to the pickle file.
+
+        Returns:
+            (CompareEmpireShape): A CompareEmpireSHape object with the state of
+                that previously dumped to the pickle file.
+        """
         compare = cls(world, data_file, years)
         with open(infile, 'rb') as picklefile:
             compare.n_polities = pickle.load(picklefile)
