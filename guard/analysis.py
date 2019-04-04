@@ -1,7 +1,6 @@
 """
 Classes and routines for analysis of simulations.
 """
-
 from . import terrain
 from .area import Rectangle
 from .daterange import (DateRange, InvalidDateRange,
@@ -786,7 +785,7 @@ class CompareEmpireShape(object):
             infile (str): Path to the pickle file.
 
         Returns:
-            (CompareEmpireShape): A CompareEmpireSHape object with the state of
+            (CompareEmpireShape): A CompareEmpireShape object with the state of
                 that previously dumped to the pickle file.
         """
         compare = cls(world, data_file, years)
