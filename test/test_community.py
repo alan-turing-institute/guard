@@ -1,17 +1,17 @@
-from guard import community, terrain, default_parameters, generate_parameters
+from guard import Community, terrain, default_parameters, generate_parameters
 import pytest
 
 
 @pytest.fixture
 def basic_community():
     def _basic_community(params=default_parameters):
-        return community.Community(params)
+        return Community(params)
     return _basic_community
 
 
 @pytest.fixture
 def advanced_community():
-    tile = community.Community(default_parameters)
+    tile = Community(default_parameters)
     tile.military_techs = [True]*default_parameters.n_military_techs
     return tile
 
@@ -34,8 +34,7 @@ class TestCommunity(object):
         assert tile.total_military_techs() == techs
 
     def test_steppe_community(self):
-        tile = community.Community(default_parameters,
-                                   landscape=terrain.steppe)
+        tile = Community(default_parameters, landscape=terrain.steppe)
 
         assert (
             tile.total_military_techs() == default_parameters.n_military_techs

@@ -1,11 +1,11 @@
-from guard import community, polity, default_parameters
+from guard import Community, polity, default_parameters
 import pytest
 
 # Create a strong polity, large with all ultrasocietal traits
 @pytest.fixture
 def strong_polity():
     state_size = 20
-    state = polity.Polity([community.Community(default_parameters)
+    state = polity.Polity([Community(default_parameters)
                            for i in range(state_size)])
     for tile in state.communities:
         tile.ultrasocietal_traits = (
@@ -18,7 +18,7 @@ def strong_polity():
 def mediocre_polity():
     state_size = 5
     state = polity.Polity(
-        [community.Community(default_parameters) for i in range(state_size)]
+        [Community(default_parameters) for i in range(state_size)]
         )
     return state
 
@@ -27,7 +27,7 @@ def mediocre_polity():
 def weak_polity():
     state_size = 1
     state = polity.Polity(
-        [community.Community(default_parameters) for i in range(state_size)]
+        [Community(default_parameters) for i in range(state_size)]
         )
     return state
 

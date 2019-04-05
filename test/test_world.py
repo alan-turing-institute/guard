@@ -1,6 +1,7 @@
-from guard import (World, community, terrain, generate_parameters,
+from guard import (World, terrain, generate_parameters,
                    default_parameters)
 from guard.world import MissingYamlKey
+from guard.community import LittoralNeighbour
 from numpy import sqrt
 import os
 import pytest
@@ -66,62 +67,62 @@ class TestLittoralNeighbours(object):
             )
 
         # Ensure littoral tiles have themselves as littoral neighbours
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(0, 1), 0
             ) in world.index(0, 1).littoral_neighbours
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 0), 0
             ) in world.index(1, 0).littoral_neighbours
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 1), 0
             ) in world.index(1, 1).littoral_neighbours
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 2), 0
             ) in world.index(1, 2).littoral_neighbours
 
         # Ensure littoral neighbours on the same sea are correct
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 0), 1
             ) in world.index(1, 1).littoral_neighbours
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 0), 2
             ) in world.index(1, 2).littoral_neighbours
 
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 1), 1
             ) in world.index(1, 2).littoral_neighbours
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 1), 1
             ) in world.index(1, 0).littoral_neighbours
 
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 2), 1
             ) in world.index(1, 1).littoral_neighbours
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 2), 2
             ) in world.index(1, 0).littoral_neighbours
 
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(0, 1), sqrt(2)
             ) in world.index(1, 2).littoral_neighbours
 
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 2), sqrt(2)
             ) in world.index(0, 1).littoral_neighbours
 
         # Ensure littoral neighbours with no sea connection are correct
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(0, 1), 1
             ) in world.index(1, 1).littoral_neighbours
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(0, 1), sqrt(2)
             ) in world.index(1, 0).littoral_neighbours
 
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 0), sqrt(2)
             ) in world.index(0, 1).littoral_neighbours
 
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 1), 1
             ) in world.index(0, 1).littoral_neighbours
 
@@ -154,7 +155,7 @@ class TestLittoralNeighbours(object):
         # Only the tile itself should be at range 0
         in_range = tile.littoral_neighbours_in_range(0)
         assert len(in_range) == 1
-        assert community.LittoralNeighbour(tile, 0) in in_range
+        assert LittoralNeighbour(tile, 0) in in_range
 
         # No more neighbours at range 1
         in_range = tile.littoral_neighbours_in_range(0)
@@ -163,61 +164,61 @@ class TestLittoralNeighbours(object):
         # Two more neighbours at sqrt(2)
         in_range = tile.littoral_neighbours_in_range(2)
         assert len(in_range) == 3
-        assert community.LittoralNeighbour(tile, 0) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(tile, 0) in in_range
+        assert LittoralNeighbour(
             world.index(1, 1), sqrt(2)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 1), sqrt(2)) in in_range
 
         # Two more neighbours at sqrt(5)
         in_range = tile.littoral_neighbours_in_range(3)
         assert len(in_range) == 5
-        assert community.LittoralNeighbour(tile, 0) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(tile, 0) in in_range
+        assert LittoralNeighbour(
             world.index(1, 1), sqrt(2)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 1), sqrt(2)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 2), sqrt(5)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 2), sqrt(5)) in in_range
 
         # Two more neighbours at sqrt(10)
         in_range = tile.littoral_neighbours_in_range(3.6)
         assert len(in_range) == 7
-        assert community.LittoralNeighbour(tile, 0) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(tile, 0) in in_range
+        assert LittoralNeighbour(
             world.index(1, 1), sqrt(2)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 1), sqrt(2)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 2), sqrt(5)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 2), sqrt(5)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 3), sqrt(10)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 3), sqrt(10)) in in_range
 
         # All nine neighbours at sqrt(13)
         in_range = tile.littoral_neighbours_in_range(huge_distance)
         assert len(in_range) == 9
-        assert community.LittoralNeighbour(tile, 0) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(tile, 0) in in_range
+        assert LittoralNeighbour(
             world.index(1, 1), sqrt(2)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 1), sqrt(2)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 2), sqrt(5)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 2), sqrt(5)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(1, 3), sqrt(10)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(3, 3), sqrt(10)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(0, 3), sqrt(13)) in in_range
-        assert community.LittoralNeighbour(
+        assert LittoralNeighbour(
             world.index(4, 3), sqrt(13)) in in_range
 
 

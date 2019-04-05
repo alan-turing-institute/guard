@@ -1,11 +1,11 @@
-from guard import community, polity, default_parameters, generate_parameters
+from guard import Community, polity, default_parameters, generate_parameters
 import pytest
 
 
 @pytest.fixture
 def polity_10():
     state = polity.Polity(
-        [community.Community(default_parameters) for i in range(10)]
+        [Community(default_parameters) for i in range(10)]
         )
     return state
 
@@ -14,7 +14,7 @@ def polity_10():
 def arbitrary_polity():
     def _arbitrary_polity(size):
         state = polity.Polity(
-            [community.Community(default_parameters) for i in range(size)]
+            [Community(default_parameters) for i in range(size)]
             )
         return state
     return _arbitrary_polity
@@ -33,13 +33,13 @@ class TestPolity(object):
     # Add a new community to the polity
     def test_add_community(self, polity_10):
         state = polity_10
-        state.add_community(community.Community(default_parameters))
+        state.add_community(Community(default_parameters))
         assert state.size() == 11
 
     # Ensure new community points to the polity
     def test_new_community(self, polity_10):
         state = polity_10
-        state.add_community(community.Community(default_parameters))
+        state.add_community(Community(default_parameters))
         assert state.communities[-1].polity is state
 
     # Remove a community from the polity
