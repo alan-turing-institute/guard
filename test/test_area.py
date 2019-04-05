@@ -47,18 +47,18 @@ class TestRectangle():
 
 @pytest.fixture()
 def entire_map(generate_world):
-    map_ = generate_world(10, 10)
-    map_area = area.Rectangle.entire_map(map_)
-    return map_, map_area
+    world = generate_world(10, 10)
+    worldarea = area.Rectangle.entire_map(world)
+    return world, worldarea
 
 
 class TestEntireMap():
     def test_in_area(self, entire_map):
-        map_, map_area = entire_map
+        world, worldarea = entire_map
 
-        for tile in map_.tiles:
-            assert map_area.in_area(tile.position[0], tile.position[1])
+        for tile in world.tiles:
+            assert worldarea.in_area(tile.position[0], tile.position[1])
 
     def test_bounds(self, entire_map):
-        map_, map_area = entire_map
-        assert map_area.bounds() == (0, map_.xdim, 0, map_.ydim)
+        world, worldarea = entire_map
+        assert worldarea.bounds() == (0, world.xdim, 0, world.ydim)

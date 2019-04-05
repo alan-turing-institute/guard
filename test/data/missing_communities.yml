@@ -1,6 +1,6 @@
 xdim: 5
 ydim: 5
-communities:
+cells:
   - activeFrom: agri1
     elevation: 0
     terrain: steppe

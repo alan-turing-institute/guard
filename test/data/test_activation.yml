@@ -1,15 +1,18 @@
-- activeFrom: agri1
-  elevation: 0
-  terrain: agriculture
-  x: 0
-  y: 0
-- activeFrom: agri2
-  elevation: 0
-  terrain: agriculture
-  x: 1
-  y: 0
-- activeFrom: agri3
-  elevation: 0
-  terrain: agriculture
-  x: 2
-  y: 0
+xdim: 3
+ydim: 1
+communities:
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 0
+    y: 0
+  - activeFrom: agri2
+    elevation: 0
+    terrain: agriculture
+    x: 1
+    y: 0
+  - activeFrom: agri3
+    elevation: 0
+    terrain: agriculture
+    x: 2
+    y: 0

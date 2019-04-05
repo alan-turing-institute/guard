@@ -1,11 +1,11 @@
-from guard import community, polity, parameters
+from guard import Community, polity, default_parameters, generate_parameters
 import pytest
 
 
 @pytest.fixture
 def polity_10():
     state = polity.Polity(
-        [community.Community(parameters.defaults) for i in range(10)]
+        [Community(default_parameters) for i in range(10)]
         )
     return state
 
@@ -14,7 +14,7 @@ def polity_10():
 def arbitrary_polity():
     def _arbitrary_polity(size):
         state = polity.Polity(
-            [community.Community(parameters.defaults) for i in range(size)]
+            [Community(default_parameters) for i in range(size)]
             )
         return state
     return _arbitrary_polity
@@ -31,17 +31,15 @@ def example_traits():
 class TestPolity(object):
 
     # Add a new community to the polity
-    def test_add_community(self, default_parameters, polity_10):
-        params = default_parameters
+    def test_add_community(self, polity_10):
         state = polity_10
-        state.add_community(community.Community(params))
+        state.add_community(Community(default_parameters))
         assert state.size() == 11
 
     # Ensure new community points to the polity
-    def test_new_community(self, default_parameters, polity_10):
-        params = default_parameters
+    def test_new_community(self, polity_10):
         state = polity_10
-        state.add_community(community.Community(params))
+        state.add_community(Community(default_parameters))
         assert state.communities[-1].polity is state
 
     # Remove a community from the polity
@@ -52,23 +50,20 @@ class TestPolity(object):
 
     # Determine the mean number of ultrasocietal traits of communities
     # in the polity
-    def test_mean_ultrasocietal_traits(self, default_parameters, polity_10,
-                                       example_traits):
-        params = default_parameters
+    def test_mean_ultrasocietal_traits(self, polity_10, example_traits):
         state = polity_10
         traits, mean_traits = example_traits
-        set_ultrasocietal_traits(params, state, traits)
+        set_ultrasocietal_traits(default_parameters, state, traits)
         assert mean_traits == state.mean_ultrasocietal_traits()
 
     # Calculate the attack power of the polity
-    def test_attack_power(self, default_parameters, polity_10, example_traits):
-        params = default_parameters
+    def test_attack_power(self, polity_10, example_traits):
         state = polity_10
         traits, mean_traits = example_traits
-        set_ultrasocietal_traits(params, state, traits)
-        attack_power = (params.ultrasocietal_attack_coefficient
+        set_ultrasocietal_traits(default_parameters, state, traits)
+        attack_power = (default_parameters.ultrasocietal_attack_coefficient
                         * sum(traits) + 1.)
-        assert attack_power == state.attack_power(params)
+        assert attack_power == state.attack_power(default_parameters)
 
 
 # Test disintegration method
@@ -100,51 +95,48 @@ class TestDisintegration(object):
             return params.disintegration_base
 
     # Ensure the minimum probability
-    def test_negative_disintegration_probability(self, default_parameters,
-                                                 polity_10):
-        params = default_parameters
+    def test_negative_disintegration_probability(self, polity_10):
         size = 10
         state = polity_10
-        traits = [params.n_ultrasocietal_traits]*size
+        traits = [default_parameters.n_ultrasocietal_traits]*size
         mean_traits = sum(traits)/len(traits)
-        set_ultrasocietal_traits(params, state, traits)
+        set_ultrasocietal_traits(default_parameters, state, traits)
 
-        probability = self.disintegration_probability(params, size,
+        probability = self.disintegration_probability(default_parameters, size,
                                                       mean_traits)
-        assert (probability == state.disintegrate_probability(params)
-                == params.disintegration_base)
+        assert (probability
+                == state.disintegrate_probability(default_parameters)
+                == default_parameters.disintegration_base)
 
     # Ensure the maximum probability is 1
-    def test_large_disintegration_probability(self, default_parameters,
-                                              arbitrary_polity):
-        params = default_parameters
+    def test_large_disintegration_probability(self, arbitrary_polity):
         size = 100
         state = arbitrary_polity(size)
         traits = [0]*size
         mean_traits = sum(traits)/len(traits)
-        set_ultrasocietal_traits(params, state, traits)
+        set_ultrasocietal_traits(default_parameters, state, traits)
 
-        probability = self.disintegration_probability(params, size,
+        probability = self.disintegration_probability(default_parameters, size,
                                                       mean_traits)
-        assert probability == state.disintegrate_probability(params) == 1
+        assert (probability
+                == state.disintegrate_probability(default_parameters)
+                == 1)
 
     # Calculate the probability for an intermediate case where the
     # probability is neither 1 nor 0
-    def test_intermediate_disintegration_probability(self, default_parameters,
-                                                     arbitrary_polity):
-        params = default_parameters
+    def test_intermediate_disintegration_probability(self, arbitrary_polity):
         size = 50
         state = arbitrary_polity(size)
         traits = [1]*size
         mean_traits = sum(traits)/len(traits)
-        set_ultrasocietal_traits(params, state, traits)
+        set_ultrasocietal_traits(default_parameters, state, traits)
 
-        probability = self.disintegration_probability(params, size,
+        probability = self.disintegration_probability(default_parameters, size,
                                                       mean_traits)
         assert all(
             [probability > 0,
              probability < 1,
-             probability == state.disintegrate_probability(params)]
+             probability == state.disintegrate_probability(default_parameters)]
             )
 
 
@@ -157,64 +149,61 @@ class TestCommunitiesInPolity(object):
                 [state]*len(state.communities))
 
     # Calculate attack power from a community object
-    def test_community_attack_power(self, default_parameters, polity_10,
-                                    example_traits):
-        params = default_parameters
+    def test_community_attack_power(self, polity_10, example_traits):
         state = polity_10
         traits, _ = example_traits
-        set_ultrasocietal_traits(params, state, traits)
-        assert (state.communities[0].attack_power(params)
-                == state.attack_power(params))
+        set_ultrasocietal_traits(default_parameters, state, traits)
+        assert (state.communities[0].attack_power(default_parameters)
+                == state.attack_power(default_parameters))
 
     # Calculate the defensive power of a community
-    def test_community_defence_power(self, default_parameters, polity_10,
-                                     example_traits):
-        params = default_parameters
+    def test_community_defence_power(self, polity_10, example_traits):
         state = polity_10
         traits, _ = example_traits
-        set_ultrasocietal_traits(params, state, traits)
+        set_ultrasocietal_traits(default_parameters, state, traits)
         elevation = 50
         index = 4
         state.communities[index].elevation = elevation
 
-        defence_power = (state.attack_power(params)
-                         + params.elevation_defence_coefficient * elevation)
+        defence_power = (state.attack_power(default_parameters)
+                         + default_parameters.elevation_defence_coefficient
+                         * elevation)
         assert (
             defence_power
-            == state.communities[index].defence_power(params, sea_attack=False)
+            == state.communities[index].defence_power(default_parameters,
+                                                      sea_attack=False)
             )
 
     # Calculate the defensive power of a community in a sea attack
-    def test_community_defence_power_sea(self, default_parameters, polity_10,
-                                         example_traits):
-        params = default_parameters
+    def test_community_defence_power_sea(self, polity_10, example_traits):
         state = polity_10
         traits, _ = example_traits
-        set_ultrasocietal_traits(params, state, traits)
+        set_ultrasocietal_traits(default_parameters, state, traits)
         elevation = 50
         index = 4
         state.communities[index].elevation = elevation
 
         assert (
-            state.attack_power(params)
-            == state.communities[index].defence_power(params, sea_attack=True)
+            state.attack_power(default_parameters)
+            == state.communities[index].defence_power(default_parameters,
+                                                      sea_attack=True)
             )
 
 
 # Test attempting cultural shift on all communities in a polity
 class TestCulturalShift(object):
-    def test_shift_to_true(self, custom_parameters, polity_10):
-        params = custom_parameters(mutation_to_ultrasocietal=1,
-                                   mutation_from_ultrasocietal=1)
+    def test_shift_to_true(self, polity_10):
+        params = generate_parameters(mutation_to_ultrasocietal=1,
+                                     mutation_from_ultrasocietal=1)
         state = polity_10
         state.cultural_shift(params)
         assert (
             state.mean_ultrasocietal_traits() == params.n_ultrasocietal_traits
             )
 
-    def test_shift_to_false(self, custom_parameters, polity_10):
-        params = custom_parameters(mutation_to_ultrasocietal=1,
-                                   mutation_from_ultrasocietal=1)
+    def test_shift_to_false(self, polity_10):
+        params = generate_parameters(mutation_to_ultrasocietal=1,
+                                     mutation_from_ultrasocietal=1)
         state = polity_10
         for tile in state.communities:
             tile.ultrasocietal_traits = [True]*params.n_ultrasocietal_traits

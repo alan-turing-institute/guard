@@ -1,6 +1,11 @@
+"""
+Parameter set definitions and defaults.
+"""
 from collections import namedtuple
 
-# Default parameters taken from Turchin et al. 2013 supporting information
+"""
+Default parameters taken from Turchin et al. 2013 supporting information
+"""
 _default_parameters = {
         # Number of ultrasocietal traits
         'n_ultrasocietal_traits': 10,
@@ -19,7 +24,7 @@ _default_parameters = {
         'ethnocide_min': 0.05,
         # Maximum probability of ethnocide (with all military technologies)
         # (epsilon_max in Turchin et al. 2013)
-        #'ethnocide_max': 1,
+        # 'ethnocide_max': 1,
         # Value from the APL code
         'ethnocide_max': 2,
         # Defence from ethnocide due to elevation coefficient (gamma_1 in
@@ -44,22 +49,56 @@ _default_parameters = {
         'base_sea_attack_distance': 1,
         # Sea attack increment per time step (Delta from Turchin et al. 2013
         # Supporting information)
-        #'sea_attack_increment': 0.025}
+        # 'sea_attack_increment': 0.025}
         # Value from the APL code
         'sea_attack_increment': 0.0025}
 
-# Paramteres named tuple constructor
-_Parameters = namedtuple('Parameters', _default_parameters.keys())
+"""
+Paramteres named tuple constructor
+"""
+Parameters = namedtuple('Parameters', _default_parameters.keys())
 
 
-# Exception for attempting to define an invalid parameter
 class ParameterKeyException(Exception):
+    """
+    Exception for attempting to define an invalid parameter
+    """
     pass
 
 
-# Generate a parameter set from the default set with any adjustments provided
-# keyword arguments
-def generate(**kwargs):
+def generate_parameters(**kwargs):
+    """
+    Generate a parameter set from the default set with any adjustments provided
+    keyword arguments.
+
+    Args:
+        **kwargs: Which paramters to change from their default values.
+
+    Keyword Args:
+        n_ultrasocietal_traits
+        n_military_techs
+        ultrasocietal_attack_coefficient
+        elevation_defence_coefficient
+        military_tech_spread_probability
+        ethnocide_min
+        ethnocide_max
+        ethnocide_elevation_coefficient
+        disintegration_base
+        disintegration_size_coefficient
+        disintegration_ultrasocietal_trait_coefficient
+        mutation_to_ultrasocietal
+        mutation_from_ultrasocietal
+        base_sea_attack_distance
+        sea_attack_increment
+
+
+    Returns:
+        (Parameters): A named tuple of the simulation parameters.
+
+    Raises:
+        (ParameterKeyException): Raised if a parameter specified in the
+            arguments list does not correspond to a simulation parameter.
+    """
     parameters = _default_parameters.copy()
     # Override defaults
     for key, value in kwargs.items():
@@ -68,8 +107,10 @@ def generate(**kwargs):
         else:
             raise ParameterKeyException('Invalid parameter: {}'.format(key))
 
-    return _Parameters(*parameters.values())
+    return Parameters(*parameters.values())
 
 
-# A default set of parameters as a named tuple
-defaults = generate()
+"""
+A default set of parameters.
+"""
+default_parameters = generate_parameters()
