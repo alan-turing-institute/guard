@@ -1,0 +1,128 @@
+xdim: 5
+ydim: 5
+cells:
+  - activeFrom: agri1
+    elevation: 0
+    terrain: steppe
+    x: 0
+    y: 0
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 1
+    y: 0
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 2
+    y: 0
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 3
+    y: 0
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 4
+    y: 0
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 0
+    y: 1
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 1
+    y: 1
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 2
+    y: 1
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 3
+    y: 1
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 4
+    y: 1
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 0
+    y: 2
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 1
+    y: 2
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 2
+    y: 2
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 3
+    y: 2
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 4
+    y: 2
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 0
+    y: 3
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 1
+    y: 3
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 2
+    y: 3
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 3
+    y: 3
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 4
+    y: 3
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 0
+    y: 4
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 1
+    y: 4
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 2
+    y: 4
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 3
+    y: 4
+  - activeFrom: agri1
+    elevation: 0
+    terrain: agriculture
+    x: 4
+    y: 4

@@ -18,12 +18,14 @@ class World(object):
     to them.
 
     Args:
-        xdim (int, default=0): The x dimension of the world in communities.
-        ydim (int, default=0): The y dimension of the world in communities.
+        xdim (int): The x dimension of the world in communities.
+        ydim (int): The y dimension of the world in communities.
+        communities (list[Community]): The list of communities in the world.
+            This is a one dimensional list. Communities are arranged by their
+            coordinates in the list in a column-major fashion, _i.e._ [(0,0),
+            (0,1), (0,2)].
         params (Parameters, default=parameters.defaults): The simulation
             parameter set to use.
-        from_file (str, default=None): Path to a world definition YAML file. If
-            supplied the world definition will be read from the file.
 
     Attributes:
         xdim (int): The x dimension of the world in communities.
@@ -175,19 +177,38 @@ class World(object):
         Args:
             yaml_file (str): Path to the file containing a YAML definition of
                 the world.
+            params (Parameters, default=parameters.defaults): The simulation
+                parameter set.
+
+        Returns:
+            (World): The world object specified by the YAML file
+
+        Raises:
+            (MissingYamlKey): Raised if a required key is not present in the
+                YAML file.
         """
         # Parse YAML file
         with open(yaml_file, 'r') as infile:
             world_data = yaml.load(infile)
-        xdim = world_data['xdim']
-        ydim = world_data['ydim']
+        try:
+            xdim = world_data['xdim']
+        except KeyError:
+            raise MissingYamlKey('xdim', yaml_file)
+        try:
+            ydim = world_data['ydim']
+        except KeyError:
+            raise MissingYamlKey('ydim', yaml_file)
 
         # Determine total number of tiles and assign list
         total_communities = xdim*ydim
         communities = [None]*total_communities
 
         # Enter world data into tiles list
-        for community in world_data['communities']:
+        try:
+            community_data = world_data['communities']
+        except KeyError:
+            raise MissingYamlKey('communities', yaml_file)
+        for community in community_data:
             x, y = community['x'], community['y']
 
             assert community['terrain'] in ['agriculture', 'steppe',
@@ -300,3 +321,14 @@ class World(object):
 
         # Increment step counter
         self.step_number += 1
+
+
+class MissingYamlKey(Exception):
+    """
+    Exception raised when a necessary key is missing from the world YAML file.
+    """
+    def __init__(self, key, filename):
+        super().__init__(
+            'Required key "{}" missing from the world definition'
+            ' file "{}".'.format(key, filename)
+            )

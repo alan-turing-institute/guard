@@ -1,6 +1,7 @@
 from guard import world, community, terrain
 from numpy import sqrt
 import os
+import pytest
 
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -297,6 +298,14 @@ def test_reset(generate_world):
     assert map_.number_of_polities() == 24
     map_.reset()
     assert map_.number_of_polities() == 25
+
+
+@pytest.mark.parametrize('yaml_file', ['missing_xdim.yml',
+                                       'missing_ydim.yml',
+                                       'missing_communities.yml'])
+def test_missing_keys(yaml_file):
+    with pytest.raises(world.MissingYamlKey):
+        world.World.from_file(project_dir+'/test/data/'+yaml_file)
 
 
 def test_yaml_parsing():
