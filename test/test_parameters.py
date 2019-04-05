@@ -10,8 +10,6 @@ def test_custom_parameter(default_parameters, custom_parameters):
     custom = custom_parameters(n_military_techs=n_military_techs,
                                ethnocide_max=ethnocide_max)
 
-    print(default)
-    print(parameters._default_parameters.items())
     assert default.n_military_techs == parameters._default_parameters[
         'n_military_techs']
     assert custom.n_military_techs == n_military_techs

@@ -56,7 +56,7 @@ _default_parameters = {
 """
 Paramteres named tuple constructor
 """
-_Parameters = namedtuple('Parameters', _default_parameters.keys())
+Parameters = namedtuple('Parameters', _default_parameters.keys())
 
 
 class ParameterKeyException(Exception):
@@ -107,7 +107,7 @@ def generate(**kwargs):
         else:
             raise ParameterKeyException('Invalid parameter: {}'.format(key))
 
-    return _Parameters(*parameters.values())
+    return Parameters(*parameters.values())
 
 
 """
