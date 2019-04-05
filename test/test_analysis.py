@@ -34,9 +34,7 @@ def test_imperial_density_summation(world_5x5):
 
 
 def test_population_data(generate_world):
-    map_ = world.World(
-        from_file=project_dir + '/test/data/test_map_5x5.yml'
-        )
+    map_ = world.World.from_file(project_dir + '/test/data/test_map_5x5.yml')
     cities = analysis.CitiesPopulation(
         map_, project_dir + '/test/data/test_cities.yml'
         )

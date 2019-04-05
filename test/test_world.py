@@ -268,9 +268,7 @@ def test_step_increment(generate_world):
 
 
 def test_community_activation(generate_world):
-    map_ = world.World(
-        from_file=project_dir+'/test/data/test_activation.yml'
-        )
+    map_ = world.World.from_file(project_dir+'/test/data/test_activation.yml')
 
     assert len(
         [tile for tile in map_.tiles
@@ -302,7 +300,7 @@ def test_reset(generate_world):
 
 
 def test_yaml_parsing():
-    map_ = world.World(from_file=project_dir+'/data/old_world.yml')
+    map_ = world.World.from_file(project_dir+'/data/old_world.yml')
 
     example_tile = map_.index(29, 89)
     assert example_tile.terrain == terrain.steppe

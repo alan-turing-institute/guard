@@ -1,5 +1,5 @@
 import pytest
-from guard import parameters, world, terrain, daterange
+from guard import parameters, world, terrain, daterange, community
 
 
 @pytest.fixture(scope='session')
@@ -16,8 +16,8 @@ def custom_parameters():
 
 @pytest.fixture(scope='class')
 def world_5x5(default_parameters):
-    map_ = world.World(5, 5, params=default_parameters)
-    map_.create_flat_agricultural_world()
+    communities = [community.Community(default_parameters) for i in range(25)]
+    map_ = world.World(5, 5, communities, default_parameters)
     return map_
 
 
@@ -41,25 +41,29 @@ def dateranges_5_centuries():
 
 
 @pytest.fixture
-def generate_world():
-    def _generate_world(xdim, ydim, params=parameters.defaults):
-        map_ = world.World(xdim, ydim, params=params)
-        map_.create_flat_agricultural_world()
+def generate_world(default_parameters):
+    def _generate_world(xdim, ydim, params=default_parameters):
+        communities = [
+            community.Community(params) for i in range(xdim*ydim)
+            ]
+        map_ = world.World(xdim, ydim, communities, params)
         return map_
     return _generate_world
 
 
 @pytest.fixture
-def generate_world_with_sea():
+def generate_world_with_sea(default_parameters):
     def _generate_world(xdim, ydim, sea_tiles):
-        map_ = world.World(xdim, ydim)
-        map_.create_flat_agricultural_world()
-
+        communities = [
+            community.Community(default_parameters) for i in range(xdim*ydim)
+            ]
         for coordinate in sea_tiles:
             x, y = coordinate
-            map_.index(x, y).terrain = terrain.sea
+            communities[x + y*xdim] = community.Community(
+                default_parameters,
+                landscape=terrain.sea
+                )
 
-        map_.set_littoral_tiles()
-        map_.set_littoral_neighbours()
+        map_ = world.World(xdim, ydim, communities, default_parameters)
         return map_
     return _generate_world

@@ -1,8 +1,9 @@
 """
 World module.
 """
-from . import community, polity, terrain, period
+from . import polity, terrain, period
 from .parameters import defaults
+from .community import Community, DIRECTIONS, LittoralNeighbour
 from numpy import sqrt
 from numpy.random import random, permutation
 import yaml
@@ -32,17 +33,21 @@ class World(object):
         tiles (list[Community]): A list of communities in the world.
         polities (list[Polity]): A list of polities in the world.
     """
-    def __init__(self, xdim=0, ydim=0, params=defaults, from_file=None):
+    def __init__(self, xdim, ydim, communities, params=defaults):
         self.params = params
 
-        if from_file is not None:
-            self.read_from_yaml(open(from_file, 'r'))
-        else:
-            self.xdim = xdim
-            self.ydim = ydim
-            self.total_tiles = xdim*ydim
+        self.xdim = xdim
+        self.ydim = ydim
+        self.total_tiles = xdim*ydim
+        self.tiles = communities
 
-        self.step_number = 0
+        # Initialise neighbours and littoral neighbours
+        self.set_neighbours()
+        self.set_littoral_tiles()
+        self.set_littoral_neighbours()
+
+        # Each agricultural tile is its own polity, set step number to zero
+        self.reset()
 
     def __str__(self):
         string = 'World:\n'
@@ -97,8 +102,8 @@ class World(object):
         Returns:
             (float): The maximum sea attack distance.
         """
-        return self.params.base_sea_attack_distance + \
-               self.step_number * self.params.sea_attack_increment
+        return (self.params.base_sea_attack_distance
+                + self.step_number * self.params.sea_attack_increment)
 
     def set_neighbours(self):
         """
@@ -122,7 +127,7 @@ class World(object):
             if not tile.terrain.polity_forming:
                 continue
 
-            for direction in community.DIRECTIONS:
+            for direction in DIRECTIONS:
                 neighbour = tile.neighbours[direction]
                 # Ensure there is a neighour
                 if neighbour is None:
@@ -144,8 +149,7 @@ class World(object):
         for tile in littoral_tiles:
             # Add self as a littoral neighbour with 0 distance, this is
             # important in order to reproduce Turchin's results
-            tile.littoral_neighbours.append(
-                community.LittoralNeighbour(tile, 0))
+            tile.littoral_neighbours.append(LittoralNeighbour(tile, 0))
 
         for i in range(n_littoral-1):
             itile = littoral_tiles[i]
@@ -159,55 +163,47 @@ class World(object):
 
                 # Add neighbour and the symmetric entry
                 itile.littoral_neighbours.append(
-                    community.LittoralNeighbour(jtile, distance))
+                    LittoralNeighbour(jtile, distance))
                 jtile.littoral_neighbours.append(
-                    community.LittoralNeighbour(itile, distance))
+                    LittoralNeighbour(itile, distance))
 
-    def read_from_yaml(self, yaml_file):
+    @classmethod
+    def from_file(cls, yaml_file, params=defaults):
         """
         Read a world from a YAML file.
 
         Args:
-            yaml_file (file-like): The file object containing a YAML
-                definition of the world.
+            yaml_file (str): Path to the file containing a YAML definition of
+                the world.
         """
         # Parse YAML file
-        tile_data = yaml.load(yaml_file)
+        with open(yaml_file, 'r') as infile:
+            world_data = yaml.load(infile)
+        xdim = world_data['xdim']
+        ydim = world_data['ydim']
 
         # Determine total number of tiles and assign list
-        self.total_tiles = len(tile_data)
-        self.tiles = [None]*self.total_tiles
-
-        # Determine bounds of lattice
-        xmax = 0
-        ymax = 0
-        for tile in tile_data:
-            x, y = tile['x'], tile['y']
-            if x > xmax:
-                xmax = x
-            if y > ymax:
-                ymax = y
-        self.xdim = xmax+1
-        self.ydim = ymax+1
+        total_communities = xdim*ydim
+        communities = [None]*total_communities
 
         # Enter world data into tiles list
-        for tile in tile_data:
-            x, y = tile['x'], tile['y']
+        for community in world_data['communities']:
+            x, y = community['x'], community['y']
 
-            assert tile['terrain'] in ['agriculture', 'steppe',
-                                       'desert', 'sea']
-            if tile['terrain'] == 'agriculture':
+            assert community['terrain'] in ['agriculture', 'steppe',
+                                            'desert', 'sea']
+            if community['terrain'] == 'agriculture':
                 landscape = terrain.agriculture
-            elif tile['terrain'] == 'steppe':
+            elif community['terrain'] == 'steppe':
                 landscape = terrain.steppe
-            elif tile['terrain'] == 'desert':
+            elif community['terrain'] == 'desert':
                 landscape = terrain.desert
-            elif tile['terrain'] == 'sea':
+            elif community['terrain'] == 'sea':
                 landscape = terrain.sea
 
             if landscape.polity_forming:
-                elevation = tile['elevation'] / 1000.
-                agricultural_period = tile['activeFrom']
+                elevation = community['elevation'] / 1000.
+                agricultural_period = community['activeFrom']
 
                 if agricultural_period == 'agri1':
                     active_from = period.agri1
@@ -216,19 +212,12 @@ class World(object):
                 elif agricultural_period == 'agri3':
                     active_from = period.agri3
 
-                self.tiles[self._index(x, y)] = community.Community(
-                    self.params, landscape, elevation, active_from)
+                communities[x + y*xdim] = Community(params, landscape,
+                                                    elevation, active_from)
             else:
-                self.tiles[self._index(x, y)] = community.Community(
-                    self.params, landscape)
+                communities[x + y*xdim] = Community(params, landscape)
 
-        # Initialise neighbours and littoral neighbours
-        self.set_neighbours()
-        self.set_littoral_tiles()
-        self.set_littoral_neighbours()
-
-        # Each agricultural tile is its own polity
-        self.reset()
+        return cls(xdim, ydim, communities, params)
 
     def reset(self):
         """
@@ -238,16 +227,6 @@ class World(object):
         self.step_number = 0
         self.polities = [polity.Polity([tile])
                          for tile in self.tiles if tile.terrain.polity_forming]
-
-    def create_flat_agricultural_world(self):
-        """
-        Populate the world with agriculture communities at zero elevation.
-        """
-        self.tiles = [community.Community(self.params)
-                      for i in range(self.total_tiles)]
-        self.set_neighbours()
-        # Each tile is its own polity
-        self.polities = [polity.Polity([tile]) for tile in self.tiles]
 
     def cultural_shift(self):
         """
