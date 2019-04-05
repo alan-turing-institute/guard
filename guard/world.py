@@ -1,8 +1,7 @@
 """
 World module.
 """
-from . import polity, terrain, period
-from .parameters import defaults
+from . import polity, terrain, period, default_parameters
 from .community import Community, DIRECTIONS, LittoralNeighbour
 from numpy import sqrt
 from numpy.random import random, permutation
@@ -24,7 +23,7 @@ class World(object):
             This is a one dimensional list. Communities are arranged by their
             coordinates in the list in a column-major fashion, _i.e._ [(0,0),
             (0,1), (0,2)].
-        params (Parameters, default=parameters.defaults): The simulation
+        params (Parameters, default=guard.default_paramters): The simulation
             parameter set to use.
 
     Attributes:
@@ -35,7 +34,7 @@ class World(object):
         tiles (list[Community]): A list of communities in the world.
         polities (list[Polity]): A list of polities in the world.
     """
-    def __init__(self, xdim, ydim, communities, params=defaults):
+    def __init__(self, xdim, ydim, communities, params=default_parameters):
         self.params = params
 
         self.xdim = xdim
@@ -170,15 +169,15 @@ class World(object):
                     LittoralNeighbour(itile, distance))
 
     @classmethod
-    def from_file(cls, yaml_file, params=defaults):
+    def from_file(cls, yaml_file, params=default_parameters):
         """
         Read a world from a YAML file.
 
         Args:
             yaml_file (str): Path to the file containing a YAML definition of
                 the world.
-            params (Parameters, default=parameters.defaults): The simulation
-                parameter set.
+            params (Parameters, default=guard.default_paramters): The
+                simulation parameter set.
 
         Returns:
             (World): The world object specified by the YAML file

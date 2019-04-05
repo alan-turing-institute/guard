@@ -1,4 +1,5 @@
-from guard import world, community, terrain
+from guard import (world, community, terrain, generate_parameters,
+                   default_parameters)
 from numpy import sqrt
 import os
 import pytest
@@ -123,20 +124,21 @@ class TestLittoralNeighbours(object):
             map_.index(1, 1), 1
             ) in map_.index(0, 1).littoral_neighbours
 
-    def test_littoral_neighbour_range(self, default_parameters,
-                                      generate_world):
-        params = default_parameters
+    def test_littoral_neighbour_range(self, generate_world):
         map_ = generate_world(xdim=5, ydim=5)
         nsteps = 10
 
-        assert map_.sea_attack_distance() == params.base_sea_attack_distance
+        assert (map_.sea_attack_distance()
+                == default_parameters.base_sea_attack_distance)
 
         for i in range(nsteps):
             map_.step()
 
-        assert map_.sea_attack_distance() == (params.base_sea_attack_distance
-                                              + params.sea_attack_increment
-                                              * (nsteps))
+        assert map_.sea_attack_distance() == (
+            default_parameters.base_sea_attack_distance
+            + default_parameters.sea_attack_increment
+            * (nsteps)
+            )
 
     def test_listtoral_neighbours_in_range(self, generate_world_with_sea):
         map_ = generate_world_with_sea(
@@ -218,8 +220,7 @@ class TestLittoralNeighbours(object):
             map_.index(4, 3), sqrt(13)) in in_range
 
 
-def test_destruction_of_empty_polities(default_parameters, generate_world):
-    params = default_parameters
+def test_destruction_of_empty_polities(generate_world):
     dimension = 5
     initial_polities = dimension**2
     map_ = generate_world(xdim=dimension, ydim=dimension)
@@ -227,16 +228,16 @@ def test_destruction_of_empty_polities(default_parameters, generate_world):
 
     attacker = map_.polities[0].communities[0]
     # Initiate an attack guaranteed to succeed
-    attacker.attack(attacker.neighbours['up'], params, sea_attack,
+    attacker.attack(attacker.neighbours['up'], default_parameters, sea_attack,
                     probability=1)
     map_.prune_empty_polities()
 
     assert len(map_.polities) == initial_polities - 1
 
 
-def test_disintegration(custom_parameters, generate_world):
+def test_disintegration(generate_world):
     dimension = 5
-    params = custom_parameters(disintegration_base=1000)
+    params = generate_parameters(disintegration_base=1000)
     map_ = generate_world(xdim=dimension, ydim=dimension, params=params)
 
     for tile in map_.tiles[1:4]:

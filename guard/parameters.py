@@ -66,7 +66,7 @@ class ParameterKeyException(Exception):
     pass
 
 
-def generate(**kwargs):
+def generate_parameters(**kwargs):
     """
     Generate a parameter set from the default set with any adjustments provided
     keyword arguments.
@@ -113,4 +113,4 @@ def generate(**kwargs):
 """
 A default set of parameters.
 """
-defaults = generate()
+default_parameters = generate_parameters()

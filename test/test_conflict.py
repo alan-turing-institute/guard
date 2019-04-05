@@ -1,15 +1,15 @@
-from guard import community, polity, parameters
+from guard import community, polity, default_parameters
 import pytest
 
 # Create a strong polity, large with all ultrasocietal traits
 @pytest.fixture
 def strong_polity():
     state_size = 20
-    state = polity.Polity([community.Community(parameters.defaults)
+    state = polity.Polity([community.Community(default_parameters)
                            for i in range(state_size)])
     for tile in state.communities:
         tile.ultrasocietal_traits = (
-            [True]*parameters.defaults.n_ultrasocietal_traits
+            [True]*default_parameters.n_ultrasocietal_traits
             )
     return state
 
@@ -18,7 +18,7 @@ def strong_polity():
 def mediocre_polity():
     state_size = 5
     state = polity.Polity(
-        [community.Community(parameters.defaults) for i in range(state_size)]
+        [community.Community(default_parameters) for i in range(state_size)]
         )
     return state
 
@@ -27,7 +27,7 @@ def mediocre_polity():
 def weak_polity():
     state_size = 1
     state = polity.Polity(
-        [community.Community(parameters.defaults) for i in range(state_size)]
+        [community.Community(default_parameters) for i in range(state_size)]
         )
     return state
 
@@ -35,27 +35,25 @@ def weak_polity():
 # Test success probability calculation
 class TestSuccessProbability(object):
     # Ensure minimum of attack success probability is 0
-    def test_impossible_attack(self, default_parameters, strong_polity,
-                               weak_polity):
-        params = default_parameters
+    def test_impossible_attack(self,  strong_polity, weak_polity):
         attacker = weak_polity.communities[0]
         defender = strong_polity.communities[0]
         sea_attack = False
 
-        probability = attacker.success_probability(defender, params,
+        probability = attacker.success_probability(defender,
+                                                   default_parameters,
                                                    sea_attack)
 
         assert probability == 0
 
     # Calculate the probability of an almost certain victory
-    def test_almost_certain_attack(self, default_parameters, strong_polity,
-                                   weak_polity):
-        params = default_parameters
+    def test_almost_certain_attack(self, strong_polity, weak_polity):
         attacker = strong_polity.communities[0]
         defender = weak_polity.communities[0]
         sea_attack = False
 
-        probability = attacker.success_probability(defender, params,
+        probability = attacker.success_probability(defender,
+                                                   default_parameters,
                                                    sea_attack)
 
         assert probability == 0.9900990099009901
@@ -64,9 +62,7 @@ class TestSuccessProbability(object):
 # Test attack routine
 class TestAttack(object):
     # Test transfer of community after an attack which is certain to succeed
-    def test_certain_attack(self, default_parameters, strong_polity,
-                            mediocre_polity):
-        params = default_parameters
+    def test_certain_attack(self,  strong_polity, mediocre_polity):
         attacker = strong_polity
         defender = mediocre_polity
         sea_attack = False
@@ -74,7 +70,8 @@ class TestAttack(object):
         attacking_community = attacker.communities[4]
         defending_community = defender.communities[1]
 
-        attacking_community.attack(target=defending_community, params=params,
+        attacking_community.attack(target=defending_community,
+                                   params=default_parameters,
                                    sea_attack=sea_attack, probability=1)
 
         assert all([attacker.size() == 21, defender.size() == 4,
@@ -86,14 +83,12 @@ class TestAttack(object):
 class TestEthnocide(object):
     # Ensure the ethnocide chance with no military tech or elevation is the
     # base
-    def test_base_ethnocide(self, default_parameters, strong_polity,
-                            weak_polity):
-        params = default_parameters
+    def test_base_ethnocide(self, strong_polity, weak_polity):
         attacking_community = strong_polity.communities[0]
         defending_community = weak_polity.communities[0]
 
         assert (
             attacking_community.ethnocide_probability(defending_community,
-                                                      params)
-            == params.ethnocide_min
+                                                      default_parameters)
+            == default_parameters.ethnocide_min
             )
