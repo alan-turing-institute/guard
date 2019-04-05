@@ -1,12 +1,12 @@
 import pytest
-from guard import world, terrain, daterange, community, default_parameters
+from guard import World, terrain, daterange, community, default_parameters
 
 
 @pytest.fixture(scope='class')
 def world_5x5():
     communities = [community.Community(default_parameters) for i in range(25)]
-    map_ = world.World(5, 5, communities, default_parameters)
-    return map_
+    world = World(5, 5, communities, default_parameters)
+    return world
 
 
 @pytest.fixture(scope='session')
@@ -34,8 +34,8 @@ def generate_world():
         communities = [
             community.Community(params) for i in range(xdim*ydim)
             ]
-        map_ = world.World(xdim, ydim, communities, params)
-        return map_
+        world = World(xdim, ydim, communities, params)
+        return world
     return _generate_world
 
 
@@ -52,6 +52,6 @@ def generate_world_with_sea():
                 landscape=terrain.sea
                 )
 
-        map_ = world.World(xdim, ydim, communities, default_parameters)
-        return map_
+        world = World(xdim, ydim, communities, default_parameters)
+        return world
     return _generate_world
