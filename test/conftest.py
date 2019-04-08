@@ -28,7 +28,7 @@ def dateranges_5_centuries():
         ]
 
 
-@pytest.fixture
+@pytest.fixture(scope='class')
 def generate_world():
     def _generate_world(xdim, ydim, params=default_parameters):
         communities = [

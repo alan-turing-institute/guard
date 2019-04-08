@@ -1,5 +1,5 @@
 from guard import (World, terrain, generate_parameters,
-                   default_parameters)
+                   default_parameters, period)
 from guard.world import MissingYamlKey
 from guard.community import LittoralNeighbour
 from numpy import sqrt
@@ -237,28 +237,35 @@ def test_destruction_of_empty_polities(generate_world):
     assert len(world.polities) == initial_polities - 1
 
 
-def test_disintegration(generate_world):
+@pytest.fixture(scope='class')
+def world_disintegration(generate_world):
     dimension = 5
     params = generate_parameters(disintegration_base=1000)
-    world = generate_world(xdim=dimension, ydim=dimension, params=params)
-
-    for tile in world.tiles[1:4]:
-        world.polities[0].transfer_community(tile)
-    world.prune_empty_polities()
-
-    for tile in world.tiles[5:]:
-        world.polities[1].transfer_community(tile)
-    world.prune_empty_polities()
-
-    assert world.number_of_polities() == 2
-    world.disintegration()
-    assert world.number_of_polities() == 25
-    assert all([state.size() == 1 for state in world.polities])
+    return generate_world(xdim=dimension, ydim=dimension, params=params)
 
 
-def test_step(generate_world):
-    world = generate_world(xdim=5, ydim=5)
-    world.step()
+@pytest.mark.incremental
+class TestDisintegration():
+    def test_disintegration_1(self, world_disintegration):
+        world = world_disintegration
+        for tile in world.tiles[1:4]:
+            world.polities[0].transfer_community(tile)
+        world.prune_empty_polities()
+
+        for tile in world.tiles[5:]:
+            world.polities[1].transfer_community(tile)
+        world.prune_empty_polities()
+
+        assert world.number_of_polities() == 2
+
+    def test_disintegration_2(self, world_disintegration):
+        world = world_disintegration
+        world.disintegration()
+        assert world.number_of_polities() == 25
+
+    def test_disintegration_3(self, world_disintegration):
+        world = world_disintegration
+        assert all([state.size() == 1 for state in world.polities])
 
 
 def test_step_increment(generate_world):
@@ -271,36 +278,33 @@ def test_step_increment(generate_world):
     assert world.step_number == nsteps
 
 
-def test_community_activation(generate_world):
-    world = World.from_file(project_dir+'/test/data/test_activation.yml')
+@pytest.fixture(scope='class')
+def world_activation():
+    return World.from_file(project_dir+'/test/data/test_activation.yml')
 
+
+@pytest.mark.parametrize('step, number_active', [(0, 1), (900, 2), (1100, 3)])
+def test_community_activation(world_activation, step, number_active):
+    world_activation.step_number = step
     assert len(
-        [tile for tile in world.tiles
-         if tile.is_active(world.step_number) is True]
-        ) == 1
-
-    world.step_number = 900
-    assert len(
-        [tile for tile in world.tiles
-         if tile.is_active(world.step_number) is True]
-        ) == 2
-
-    world.step_number = 1100
-    assert len(
-        [tile for tile in world.tiles
-         if tile.is_active(world.step_number) is True]
-        ) == 3
+        [tile for tile in world_activation.tiles
+            if tile.is_active(world_activation.step_number) is True]
+        ) == number_active
 
 
-def test_reset(generate_world):
-    world = generate_world(5, 5)
+@pytest.mark.incremental
+class TestReset():
+    def test_initial(self, world_5x5):
+        assert world_5x5.number_of_polities() == 25
 
-    assert world.number_of_polities() == 25
-    world.polities[0].transfer_community(world.tiles[-1])
-    world.prune_empty_polities()
-    assert world.number_of_polities() == 24
-    world.reset()
-    assert world.number_of_polities() == 25
+    def test_community_transfer(self, world_5x5):
+        world_5x5.polities[0].transfer_community(world_5x5.tiles[-1])
+        world_5x5.prune_empty_polities()
+        assert world_5x5.number_of_polities() == 24
+
+    def test_reset(self, world_5x5):
+        world_5x5.reset()
+        assert world_5x5.number_of_polities() == 25
 
 
 @pytest.mark.parametrize('yaml_file', ['missing_xdim.yml',
@@ -311,17 +315,40 @@ def test_missing_keys(yaml_file):
         World.from_file(project_dir+'/test/data/'+yaml_file)
 
 
-def test_yaml_parsing():
-    world = World.from_file(project_dir+'/data/old_world.yml')
+@pytest.fixture(scope='module')
+def yaml_world():
+    return World.from_file(project_dir+'/test/data/test_map_5x5.yml')
 
-    example_tile = world.index(29, 89)
-    assert example_tile.terrain == terrain.steppe
-    assert example_tile.elevation == 98 / 1000.
 
-    assert world.total_tiles == 13915
-    assert world.number_of_polities() == 2647
+class TestYamlParsing():
+    def test_total_tiles(self, yaml_world):
+        assert yaml_world.total_tiles == 25
 
-    assert world.xdim == 115
-    assert world.ydim == 121
+    def test_number_of_polities(self, yaml_world):
+        assert yaml_world.number_of_polities() == 22
 
-    world.step()
+    @pytest.mark.parametrize('dimension, value', [('xdim', 5),
+                                                  ('ydim', 5)])
+    def test_dimensions(self, yaml_world, dimension, value):
+        assert yaml_world.__getattribute__(dimension) == value
+
+    @pytest.mark.parametrize('coordinate, value', [
+        ((4, 4), terrain.steppe),
+        ((3, 4), terrain.desert),
+        ((4, 0), terrain.sea),
+        ((1, 0), terrain.agriculture)
+        ])
+    def test_terrain(self, yaml_world, coordinate, value):
+        assert yaml_world.index(*coordinate).terrain == value
+
+    @pytest.mark.parametrize('coordinate, elevation', [((2, 2), 5),
+                                                       ((3, 1), 3),
+                                                       ((3, 0), 1)])
+    def test_elevation(self, yaml_world, coordinate, elevation):
+        assert yaml_world.index(*coordinate).elevation == elevation
+
+    @pytest.mark.parametrize('coordinate, period', [((1, 0), period.agri1),
+                                                    ((2, 0), period.agri2),
+                                                    ((4, 1), period.agri3)])
+    def test_active_from(self, yaml_world, coordinate, period):
+        assert yaml_world.index(*coordinate).period == period

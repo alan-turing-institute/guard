@@ -11,24 +11,24 @@ communities:
     terrain: agriculture
     x: 1
     y: 0
-  - activeFrom: agri1
+  - activeFrom: agri2
     elevation: 0
     terrain: agriculture
     x: 2
     y: 0
   - activeFrom: agri1
-    elevation: 0
+    elevation: 1000
     terrain: agriculture
     x: 3
     y: 0
   - activeFrom: agri1
     elevation: 0
-    terrain: agriculture
+    terrain: sea
     x: 4
     y: 0
   - activeFrom: agri1
     elevation: 0
-    terrain: agriculture
+    terrain: sea
     x: 0
     y: 1
   - activeFrom: agri1
@@ -42,11 +42,11 @@ communities:
     x: 2
     y: 1
   - activeFrom: agri1
-    elevation: 0
+    elevation: 3000
     terrain: agriculture
     x: 3
     y: 1
-  - activeFrom: agri1
+  - activeFrom: agri3
     elevation: 0
     terrain: agriculture
     x: 4
@@ -62,7 +62,7 @@ communities:
     x: 1
     y: 2
   - activeFrom: agri1
-    elevation: 0
+    elevation: 5000
     terrain: agriculture
     x: 2
     y: 2
@@ -118,11 +118,11 @@ communities:
     y: 4
   - activeFrom: agri1
     elevation: 0
-    terrain: agriculture
+    terrain: desert
     x: 3
     y: 4
   - activeFrom: agri1
     elevation: 0
-    terrain: agriculture
+    terrain: steppe
     x: 4
     y: 4
