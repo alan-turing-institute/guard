@@ -188,7 +188,7 @@ class World(object):
         """
         # Parse YAML file
         with open(yaml_file, 'r') as infile:
-            world_data = yaml.load(infile)
+            world_data = yaml.load(infile, Loader=yaml.FullLoader)
         try:
             xdim = world_data['xdim']
         except KeyError:

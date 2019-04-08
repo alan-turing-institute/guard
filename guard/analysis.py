@@ -590,7 +590,7 @@ class CitiesPopulation(CorrelateBase):
 
         # Sum populations from cities and eras
         with open(data_file, 'r') as yamlfile:
-            cities_data = yaml.load(yamlfile)
+            cities_data = yaml.load(yamlfile, Loader=yaml.FullLoader)
 
             for city in cities_data:
                 for era in date_ranges:
@@ -624,7 +624,7 @@ class Battles(CorrelateBase):
 
         # Sum battles from data file
         with open(data_file, 'r') as yamlfile:
-            battles = yaml.load(yamlfile)
+            battles = yaml.load(yamlfile, Loader=yaml.FullLoader)
 
             for battle in battles:
                 for era in self.date_ranges:
@@ -673,7 +673,7 @@ class CompareEmpireShape(object):
         self.years = years
 
         with open(data_file, 'r') as infile:
-            empire_dict = yaml.load(infile)
+            empire_dict = yaml.load(infile, Loader=yaml.FullLoader)
 
         self.name = empire_dict['empire']
         self.occupied = {}
