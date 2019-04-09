@@ -33,7 +33,7 @@ class Community(object):
 
     Attributes:
         terrain (Terrain): The terrain of the community.
-        elevation (int): The communities elevation in metres.
+        elevation (int): The communities elevation in kilometres.
         ultrasocietal_traits (list[bool]): A vector of which ultrasocietal
             traits the community possesses.
         military_techs (list[bool]): A vector of which military technologies
