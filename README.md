@@ -1,4 +1,4 @@
-# guard [![Build Status](https://travis-ci.com/alan-turing-institute/guard.svg?token=QpRTp1bT17BnXV9jtJ6H&branch=master)](https://travis-ci.com/alan-turing-institute/guard)
+# guard [![Build Status](https://travis-ci.com/alan-turing-institute/guard.svg?token=QpRTp1bT17BnXV9jtJ6H&branch=master)](https://travis-ci.com/alan-turing-institute/guard) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alan-turing-institute/guard/master)
 GUARD: Global Urban Analytics for Resilient Defence
 
 An agent-based model for the evolution of large scale empires in the historical
@@ -13,6 +13,8 @@ publication](https://arxiv.org/abs/1903.11729).
 
 The data used to generate figures in the publication are located in the 'data'
 directory.
+
+Try the examples using binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alan-turing-institute/guard/master).
 
 ## Examples
 
