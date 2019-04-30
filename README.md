@@ -1,4 +1,4 @@
-# guard [![Build Status](https://travis-ci.com/alan-turing-institute/guard.svg?token=QpRTp1bT17BnXV9jtJ6H&branch=master)](https://travis-ci.com/alan-turing-institute/guard)
+# guard [![Build Status](https://travis-ci.com/alan-turing-institute/guard.svg?token=QpRTp1bT17BnXV9jtJ6H&branch=master)](https://travis-ci.com/alan-turing-institute/guard) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alan-turing-institute/guard/master)
 
 This repository contains code and data to reproduce results from Madge et al. 2019. "Simulating Imperial Dynamics and Conflict in the Ancient World". https://arxiv.org/abs/1903.11729, which expands upon Turchin et al. 2013. "War, space, and the evolution of Old World complex societies". https://doi.org/10.1073/pnas.1308825110.
 
@@ -18,6 +18,8 @@ We use three datasets:
 
 Example simulations and validations of the model against historical data are
 given in the notebooks directory.
+
+Try the examples using binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alan-turing-institute/guard/master).
 
 ## Testing
 
