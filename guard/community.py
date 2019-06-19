@@ -4,6 +4,7 @@ Community class.
 from . import terrain, period
 from collections import namedtuple
 from numpy.random import random, randint, choice
+import numpy as np
 
 """
 Names of the four cardinal directions
@@ -266,36 +267,78 @@ class Community(object):
                 invoked when a successful attack is made. Currently used to
                 collect attack frequency.
         """
-        direction = choice(DIRECTIONS)
-        target = self.neighbours[direction]
-
         sea_attack = False
         proceed = True
 
-        # Don't attack or spread technology to an empty neighbour
-        # It is important to replicate Turchin's results that communities
-        # attack each neighbour with a probability of 1/4
-        if target is None:
-            return
+        # Check attack method
+        if params.attack_method == 'uniform':
+            direction = choice(DIRECTIONS)
+            target = self.neighbours[direction]
 
-        if target.terrain is terrain.sea:
-            # Sea attack
-            # Find a littoral neighbour within range
-            in_range = self.littoral_neighbours_in_range(sea_attack_distance)
-            target = in_range[choice(len(in_range))].neighbour
-            sea_attack = True
-        elif not target.terrain.polity_forming:
-            # Don't attack or spread technology to a non-agricultural cell
-            return
+            # Don't attack or spread technology to an empty neighbour
+            # It is important to replicate Turchin's results that communities
+            # attack each neighbour with a probability of 1/4
+            if target is None:
+                return
 
-        # Ensure target is active (agricultural at the current time), otherwise
-        # don't attack or spread technology
-        if target.is_active(step_number) is False:
-            return
+            if target.terrain is terrain.sea:
+                # Sea attack
+                # Find a littoral neighbour within range
+                in_range = self.littoral_neighbours_in_range(
+                    sea_attack_distance)
+                target = in_range[choice(len(in_range))].neighbour
+                sea_attack = True
 
-        # Don't attack a neighbour in the same polity, but do spread technology
-        if target.polity is self.polity:
-            proceed = False
+            if not target.terrain.polity_forming:
+                # Don't attack or spread technology to a non-agricultural cell
+                return
+
+            # Ensure target is active (agricultural at the current time),
+            # otherwise don't attack or spread technology
+            if target.is_active(step_number) is False:
+                return
+
+            # Don't attack a neighbour in the same polity, but do spread
+            # technology
+            if target.polity is self.polity:
+                proceed = False
+
+        elif params.attack_method == 'entropy_maximisation':
+            # strength = self.attack_power(params)
+            sea_neighbours = [
+                    littoral_neighbour.neighbour for littoral_neighbour
+                    in self.littoral_neighbours_in_range(sea_attack_distance)
+                    ]
+            land_neighbours = [
+                    neighbour for neighbour in self.neighbours.values()
+                    if neighbour.terrain.polity_forming
+                    if neighbour.is_active(step_number)
+                    if neighbour.polity is not self.polity
+                    ]
+            all_neighbours = land_neighbours + sea_neighbours
+
+            if len(all_neighbours) == 0:
+                return
+
+            neighbour_strengths = np.array(
+                [neighbour.attack_power(params)
+                 for neighbour in all_neighbours]
+                )
+
+            # advantages = strength - neighbour_strengths
+            # advantages = np.exp(advantages)
+            # total_advantage = np.sum(advantages)
+            # probabilities = advantages / total_advantage
+            probabilities = neighbour_strengths / np.sum(neighbour_strengths)
+
+            target_no = choice(range(len(all_neighbours)), p=probabilities)
+            target = all_neighbours[target_no]
+
+            if target_no > len(land_neighbours)-1:
+                sea_attack = True
+        else:
+            raise ValueError('attack_method must be one of "uniform" or'
+                             '"entropy_maxmisation"')
 
         # Conduct an attack if there is no reason not to
         if proceed:

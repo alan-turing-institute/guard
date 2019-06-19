@@ -49,9 +49,11 @@ _default_parameters = {
         'base_sea_attack_distance': 1,
         # Sea attack increment per time step (Delta from Turchin et al. 2013
         # Supporting information)
-        # 'sea_attack_increment': 0.025}
+        # 'sea_attack_increment': 0.025,
         # Value from the APL code
-        'sea_attack_increment': 0.0025}
+        'sea_attack_increment': 0.0025,
+        # Attack method, valid values are 'uniform' and 'entropy_maximisation'
+        'attack_method': 'uniform'}
 
 """
 Paramteres named tuple constructor
@@ -90,7 +92,7 @@ def generate_parameters(**kwargs):
         mutation_from_ultrasocietal
         base_sea_attack_distance
         sea_attack_increment
-
+        attack_method
 
     Returns:
         (Parameters): A named tuple of the simulation parameters.
