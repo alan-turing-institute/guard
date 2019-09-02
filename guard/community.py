@@ -325,11 +325,8 @@ class Community(object):
                  for neighbour in all_neighbours]
                 )
 
-            # advantages = strength - neighbour_strengths
-            # advantages = np.exp(advantages)
-            # total_advantage = np.sum(advantages)
-            # probabilities = advantages / total_advantage
-            probabilities = neighbour_strengths / np.sum(neighbour_strengths)
+            advantages = 1. / neighbour_strengths
+            probabilities = advantages / np.sum(advantages)
 
             target_no = choice(range(len(all_neighbours)), p=probabilities)
             target = all_neighbours[target_no]
