@@ -53,7 +53,10 @@ _default_parameters = {
         # Value from the APL code
         'sea_attack_increment': 0.0025,
         # Attack method, valid values are 'uniform' and 'entropy_maximisation'
-        'attack_method': 'uniform'}
+        'attack_method': 'uniform',
+        # Military technology seding, valid values are 'steppes' and 'uniform'
+        'military_technology_seed': 'steppes'
+        }
 
 """
 Paramteres named tuple constructor

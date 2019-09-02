@@ -56,11 +56,23 @@ class Community(object):
         self.period = active_from
 
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
-        # Steppe communities start with all military technologies
-        if landscape == terrain.steppe:
-            self.military_techs = [True]*params.n_military_techs
+        if params.military_technology_seed == 'steppes':
+            # Steppe communities start with all military technologies
+            if landscape == terrain.steppe:
+                self.military_techs = [True]*params.n_military_techs
+            else:
+                self.military_techs = [False]*params.n_military_techs
+        elif params.military_technology_seed == 'uniform':
+            # 4.34% chance of starting with all military technologies In the
+            # original simulation there are 115 steppes tiles out of 2647
+            # polity supporting (steppe or agricultural) tiles making 4.34% of
+            # the communities begining with all miliatry technologies
+            if random() < 0.0434:
+                self.military_techs = [True]*params.n_military_techs
+            else:
+                self.military_techs = [False]*params.n_military_techs
         else:
-            self.military_techs = [False]*params.n_military_techs
+            raise ValueError('tech_seed must be one of "steppes" or "uniform"')
 
         self.position = (None, None)
         self.neighbours = dict.fromkeys(DIRECTIONS)
