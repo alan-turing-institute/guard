@@ -44,6 +44,8 @@ _default_parameters = {
         # Mutation away from an ultrasocietal trait probability (mu_10 in
         # Turchin et al. 2013)
         'mutation_from_ultrasocietal': 0.002,
+        # Whether to allow sea attacks
+        'sea_attacks': True,
         # Base sea attack distance (d_sea from Turchin et al. 2013 supporting
         # information)
         'base_sea_attack_distance': 1,

@@ -294,12 +294,15 @@ class Community(object):
                 return
 
             if target.terrain is terrain.sea:
-                # Sea attack
-                # Find a littoral neighbour within range
-                in_range = self.littoral_neighbours_in_range(
-                    sea_attack_distance)
-                target = in_range[choice(len(in_range))].neighbour
-                sea_attack = True
+                if params.sea_attacks:
+                    # Sea attack
+                    # Find a littoral neighbour within range
+                    in_range = self.littoral_neighbours_in_range(
+                        sea_attack_distance)
+                    target = in_range[choice(len(in_range))].neighbour
+                    sea_attack = True
+                else:
+                    return
 
             if not target.terrain.polity_forming:
                 # Don't attack or spread technology to a non-agricultural cell
@@ -316,18 +319,20 @@ class Community(object):
                 proceed = False
 
         elif params.attack_method == 'entropy_maximisation':
-            # strength = self.attack_power(params)
-            sea_neighbours = [
+            land_neighbours = [
+                neighbour for neighbour in self.neighbours.values()
+                if neighbour.terrain.polity_forming
+                if neighbour.is_active(step_number)
+                if neighbour.polity is not self.polity
+                ]
+            if params.sea_attacks:
+                sea_neighbours = [
                     littoral_neighbour.neighbour for littoral_neighbour
                     in self.littoral_neighbours_in_range(sea_attack_distance)
                     ]
-            land_neighbours = [
-                    neighbour for neighbour in self.neighbours.values()
-                    if neighbour.terrain.polity_forming
-                    if neighbour.is_active(step_number)
-                    if neighbour.polity is not self.polity
-                    ]
-            all_neighbours = land_neighbours + sea_neighbours
+                all_neighbours = land_neighbours + sea_neighbours
+            else:
+                all_neighbours = land_neighbours
 
             if len(all_neighbours) == 0:
                 return
