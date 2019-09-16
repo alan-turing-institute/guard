@@ -68,7 +68,8 @@ class Community(object):
             # polity supporting (steppe or agricultural) tiles making 4.34% of
             # the communities begining with all miliatry technologies
             if random() < 0.0434:
-                self.military_techs = [True]*params.n_military_techs
+                if landscape in [terrain.steppe, terrain.agriculture]:
+                    self.military_techs = [True]*params.n_military_techs
             else:
                 self.military_techs = [False]*params.n_military_techs
         else:
