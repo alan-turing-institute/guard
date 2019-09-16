@@ -44,8 +44,9 @@ class World(object):
 
         # Initialise neighbours and littoral neighbours
         self.set_neighbours()
-        self.set_littoral_tiles()
-        self.set_littoral_neighbours()
+        if params.sea_attacks:
+            self.set_littoral_tiles()
+            self.set_littoral_neighbours()
 
         # Each agricultural tile is its own polity, set step number to zero
         self.reset()

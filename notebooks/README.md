@@ -31,3 +31,9 @@ Analyses polity sizes within the extend of the Roman empire at a series of
 centuries. Histograms of the number of polities of a given size, and number of
 cells within polities of each size are plotted corresponding to figure 2 in
 [Madge et al. (2019)](https://arxiv.org/abs/1903.11729).
+
+## greedy_attack
+
+Introduces a new 'greedy' attack algorithm where communities preferentially
+attack weaker neighbours. Plots of imperial density using this attack algorithm
+and comparisons to the historical imperial density are produced.

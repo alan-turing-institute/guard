@@ -44,14 +44,21 @@ _default_parameters = {
         # Mutation away from an ultrasocietal trait probability (mu_10 in
         # Turchin et al. 2013)
         'mutation_from_ultrasocietal': 0.002,
+        # Whether to allow sea attacks
+        'sea_attacks': True,
         # Base sea attack distance (d_sea from Turchin et al. 2013 supporting
         # information)
         'base_sea_attack_distance': 1,
         # Sea attack increment per time step (Delta from Turchin et al. 2013
         # Supporting information)
-        # 'sea_attack_increment': 0.025}
+        # 'sea_attack_increment': 0.025,
         # Value from the APL code
-        'sea_attack_increment': 0.0025}
+        'sea_attack_increment': 0.0025,
+        # Attack method, valid values are 'uniform' and 'entropy_maximisation'
+        'attack_method': 'uniform',
+        # Military technology seding, valid values are 'steppes' and 'uniform'
+        'military_technology_seed': 'steppes'
+        }
 
 """
 Paramteres named tuple constructor
@@ -90,7 +97,7 @@ def generate_parameters(**kwargs):
         mutation_from_ultrasocietal
         base_sea_attack_distance
         sea_attack_increment
-
+        attack_method
 
     Returns:
         (Parameters): A named tuple of the simulation parameters.

@@ -4,6 +4,7 @@ Community class.
 from . import terrain, period
 from collections import namedtuple
 from numpy.random import random, randint, choice
+import numpy as np
 
 """
 Names of the four cardinal directions
@@ -55,11 +56,24 @@ class Community(object):
         self.period = active_from
 
         self.ultrasocietal_traits = [False]*params.n_ultrasocietal_traits
-        # Steppe communities start with all military technologies
-        if landscape == terrain.steppe:
-            self.military_techs = [True]*params.n_military_techs
+        if params.military_technology_seed == 'steppes':
+            # Steppe communities start with all military technologies
+            if landscape == terrain.steppe:
+                self.military_techs = [True]*params.n_military_techs
+            else:
+                self.military_techs = [False]*params.n_military_techs
+        elif params.military_technology_seed == 'uniform':
+            # 4.34% chance of starting with all military technologies In the
+            # original simulation there are 115 steppes tiles out of 2647
+            # polity supporting (steppe or agricultural) tiles making 4.34% of
+            # the communities begining with all miliatry technologies
+            if random() < 0.0434:
+                if landscape in [terrain.steppe, terrain.agriculture]:
+                    self.military_techs = [True]*params.n_military_techs
+            else:
+                self.military_techs = [False]*params.n_military_techs
         else:
-            self.military_techs = [False]*params.n_military_techs
+            raise ValueError('tech_seed must be one of "steppes" or "uniform"')
 
         self.position = (None, None)
         self.neighbours = dict.fromkeys(DIRECTIONS)
@@ -266,36 +280,80 @@ class Community(object):
                 invoked when a successful attack is made. Currently used to
                 collect attack frequency.
         """
-        direction = choice(DIRECTIONS)
-        target = self.neighbours[direction]
-
         sea_attack = False
         proceed = True
 
-        # Don't attack or spread technology to an empty neighbour
-        # It is important to replicate Turchin's results that communities
-        # attack each neighbour with a probability of 1/4
-        if target is None:
-            return
+        # Check attack method
+        if params.attack_method == 'uniform':
+            direction = choice(DIRECTIONS)
+            target = self.neighbours[direction]
 
-        if target.terrain is terrain.sea:
-            # Sea attack
-            # Find a littoral neighbour within range
-            in_range = self.littoral_neighbours_in_range(sea_attack_distance)
-            target = in_range[choice(len(in_range))].neighbour
-            sea_attack = True
-        elif not target.terrain.polity_forming:
-            # Don't attack or spread technology to a non-agricultural cell
-            return
+            # Don't attack or spread technology to an empty neighbour
+            # It is important to replicate Turchin's results that communities
+            # attack each neighbour with a probability of 1/4
+            if target is None:
+                return
 
-        # Ensure target is active (agricultural at the current time), otherwise
-        # don't attack or spread technology
-        if target.is_active(step_number) is False:
-            return
+            if target.terrain is terrain.sea:
+                if params.sea_attacks:
+                    # Sea attack
+                    # Find a littoral neighbour within range
+                    in_range = self.littoral_neighbours_in_range(
+                        sea_attack_distance)
+                    target = in_range[choice(len(in_range))].neighbour
+                    sea_attack = True
+                else:
+                    return
 
-        # Don't attack a neighbour in the same polity, but do spread technology
-        if target.polity is self.polity:
-            proceed = False
+            if not target.terrain.polity_forming:
+                # Don't attack or spread technology to a non-agricultural cell
+                return
+
+            # Ensure target is active (agricultural at the current time),
+            # otherwise don't attack or spread technology
+            if target.is_active(step_number) is False:
+                return
+
+            # Don't attack a neighbour in the same polity, but do spread
+            # technology
+            if target.polity is self.polity:
+                proceed = False
+
+        elif params.attack_method == 'entropy_maximisation':
+            land_neighbours = [
+                neighbour for neighbour in self.neighbours.values()
+                if neighbour.terrain.polity_forming
+                if neighbour.is_active(step_number)
+                if neighbour.polity is not self.polity
+                ]
+            if params.sea_attacks:
+                sea_neighbours = [
+                    littoral_neighbour.neighbour for littoral_neighbour
+                    in self.littoral_neighbours_in_range(sea_attack_distance)
+                    ]
+                all_neighbours = land_neighbours + sea_neighbours
+            else:
+                all_neighbours = land_neighbours
+
+            if len(all_neighbours) == 0:
+                return
+
+            neighbour_strengths = np.array(
+                [neighbour.attack_power(params)
+                 for neighbour in all_neighbours]
+                )
+
+            advantages = 1. / neighbour_strengths
+            probabilities = advantages / np.sum(advantages)
+
+            target_no = choice(range(len(all_neighbours)), p=probabilities)
+            target = all_neighbours[target_no]
+
+            if target_no > len(land_neighbours)-1:
+                sea_attack = True
+        else:
+            raise ValueError('attack_method must be one of "uniform" or'
+                             '"entropy_maxmisation"')
 
         # Conduct an attack if there is no reason not to
         if proceed:
